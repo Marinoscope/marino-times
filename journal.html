@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth font-sans">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Journal - まりのたいむず</title>
+    <meta name="description" content="櫻坂46 幸阪茉里乃さん応援団体「まりのたいむず」の活動実績アーカイブです。">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'sakura-pink': '#fce4ec',
+                        'sakura-dark': '#f8bbd0',
+                        'pearl-green': '#e0f2f1',
+                        'pearl-dark': '#b2dfdb',
+                        'soft-black': '#4a4a4a',
+                        'soft-brown': '#5d4037',
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', '"Zen Maru Gothic"', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body
+    class="bg-gray-50 text-soft-black font-sans leading-relaxed relative overflow-x-hidden min-h-screen flex flex-col">
+    <div id="sakura-container" class="fixed inset-0 pointer-events-none z-0 overflow-hidden"></div>
+
+    <header class="fixed top-0 w-full z-50 transition-all duration-300 backdrop-blur-md bg-white/70 shadow-sm">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="index.html"
+                class="text-xl font-bold text-soft-brown tracking-widest hover:text-sakura-dark transition-colors">まりのたいむず</a>
+            <nav id="nav-menu"
+                class="hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md shadow-md py-4 flex-col space-y-4 md:static md:flex md:flex-row md:space-y-0 md:space-x-4 lg:space-x-6 md:w-auto md:bg-transparent md:shadow-none text-[10px] lg:text-[11px] font-bold tracking-[0.2em] uppercase items-center">
+                <a href="index.html#schedule" class="hover:text-sakura-dark transition-colors block">Schedule</a>
+                <a href="index.html#about" class="hover:text-sakura-dark transition-colors block">About Us</a>
+                <a href="log.html" class="hover:text-sakura-dark transition-colors block">Marino's Log</a>
+                <a href="gallery.html" class="hover:text-sakura-dark transition-colors block">Gallery</a>
+                <a href="journal.html"
+                    class="text-sakura-dark transition-colors border-b-2 border-sakura-dark pb-1 block">Our Journal</a>
+                <a href="activities.html" class="hover:text-sakura-dark transition-colors block">Our Activities</a>
+                <a href="index.html#links" class="hover:text-sakura-dark transition-colors block">Official Links</a>
+                <a href="index.html#contact" class="hover:text-sakura-dark transition-colors block">Contact Us</a>
+            </nav>
+            <!-- Mobile Menu Button -->
+            <button id="menu-btn" class="md:hidden text-soft-black focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
+                    </path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="relative z-10 pt-32 pb-24 flex-grow">
+        <section class="px-4 max-w-6xl mx-auto fade-up transition-all duration-1000">
+            <div class="text-center mb-16">
+                <a href="index.html"
+                    class="inline-flex items-center text-xs font-bold text-gray-400 hover:text-sakura-dark transition-colors mb-8 uppercase tracking-[0.2em]">
+                    &larr; Back to Home
+                </a>
+                <h2 class="text-3xl md:text-4xl font-bold text-soft-brown tracking-[0.3em] uppercase">
+                    Our Journal
+                </h2>
+                <p class="text-sm text-gray-500 mt-4 tracking-widest uppercase">Activities & News</p>
+            </div>
+
+            <div id="journal-grid-full" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Cards will be injected here by JS -->
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-50 border-t border-gray-200 py-8 text-center text-xs text-gray-400">
+        <p class="mb-2">© 2026 まりのたいむず. All Rights Reserved.</p>
+        <p>※当サイトは非公式ファンサイトです。所属事務所および関係者様とは一切関係ありません。</p>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>

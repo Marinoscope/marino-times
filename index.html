@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth scroll-pt-20">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>まりのたいむず - 櫻坂46 幸阪茉里乃 応援団体公式サイト</title>
+    <meta name="description" content="櫻坂46 幸阪茉里乃さんの応援団体「まりのたいむず」公式サイト。最新の活動情報、プロフィール、歴史などをまとめています。">
+
+    <!-- OGP -->
+    <meta property="og:title" content="まりのたいむず - 櫻坂46 幸阪茉里乃 応援団体公式サイト">
+    <meta property="og:description" content="櫻坂46 幸阪茉里乃さんの応援団体「まりのたいむず」公式サイト。最新の活動情報、プロフィール、歴史などをまとめています。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://marino-times.web.app/">
+    <meta property="og:image" content="https://placehold.jp/1200x630.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@marino_times">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'sakura-pink': '#fce4ec',   // Light pink base
+                        'sakura-dark': '#f8bbd0',   // Darker pink for accents
+                        'pearl-green': '#e0f2f1',   // Light teal base
+                        'pearl-dark': '#b2dfdb',    // Darker teal for accents
+                        'soft-black': '#4a4a4a',    // Soft black text
+                        'soft-brown': '#5d4037',    // Brownish text for headers
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', '"Zen Maru Gothic"', 'sans-serif'],
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 3s infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="bg-gray-50 text-soft-black font-sans leading-relaxed relative overflow-x-hidden">
+
+    <!-- Sakura Animation Container -->
+    <div id="sakura-container" class="fixed inset-0 pointer-events-none z-0 overflow-hidden"></div>
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 transition-all duration-300 backdrop-blur-md bg-white/70 shadow-sm">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <h1 class="text-xl font-bold text-soft-brown tracking-widest">まりのたいむず</h1>
+            <nav id="nav-menu"
+                class="hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md shadow-md py-4 flex-col space-y-4 md:static md:flex md:flex-row md:space-y-0 md:space-x-4 lg:space-x-6 md:w-auto md:bg-transparent md:shadow-none text-[10px] lg:text-[11px] font-bold tracking-[0.2em] uppercase items-center">
+                <a href="#schedule" class="hover:text-sakura-dark transition-colors block">Schedule</a>
+                <a href="#about" class="hover:text-sakura-dark transition-colors block">About Us</a>
+                <a href="#history" class="hover:text-sakura-dark transition-colors block">Marino's Log</a>
+                <a href="#gallery-preview" class="hover:text-sakura-dark transition-colors block">Gallery</a>
+                <a href="#journal" class="hover:text-sakura-dark transition-colors block">Our Journal</a>
+                <a href="#activities" class="hover:text-sakura-dark transition-colors block">Our Activities</a>
+                <a href="#links" class="hover:text-sakura-dark transition-colors block">Official Links</a>
+                <a href="#contact" class="hover:text-sakura-dark transition-colors block">Contact Us</a>
+            </nav>
+            <!-- Mobile Menu Button -->
+            <button id="menu-btn" class="md:hidden text-soft-black focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
+                    </path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="relative z-10 pt-16">
+
+        <!-- Hero Section -->
+        <section id="hero"
+            class="min-h-screen flex flex-col items-center justify-center text-center px-4 relative bg-gradient-to-b from-sakura-pink via-white to-pearl-green/30">
+            <div
+                class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 pointer-events-none">
+            </div>
+
+            <div class="animate-float">
+                <!-- Logo Placeholder -->
+                <div
+                    class="w-48 h-48 md:w-64 md:h-64 bg-white/50 rounded-full flex items-center justify-center shadow-lg mb-8 mx-auto backdrop-blur-sm border-4 border-white">
+                    <span class="text-4xl font-bold text-sakura-dark">Logo</span>
+                </div>
+                <!-- Title & Subtitle -->
+                <h2 class="text-3xl md:text-5xl font-bold text-soft-brown mb-4 tracking-[0.2em] uppercase">
+                    まりのたいむず
+                </h2>
+                <p class="text-xs md:text-sm text-gray-500 font-light tracking-[0.3em] uppercase">Marino Kosaka Official
+                    Fan Organization</p>
+            </div>
+
+            <!-- Scroll Down Indicator -->
+            <div
+                class="absolute bottom-[10%] left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce text-gray-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                </svg>
+                <span class="text-xs">Scroll</span>
+            </div>
+        </section>
+
+        <!-- Alert Section -->
+        <section id="alert"
+            class="py-8 px-4 bg-white/80 backdrop-blur-sm -mt-10 mb-10 mx-auto max-w-4xl relative z-20 rounded-xl shadow-md transform -translate-y-1/2">
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4 text-center">
+                <span
+                    class="bg-sakura-dark text-white px-4 py-1 rounded-full text-sm font-bold shadow-sm animate-bounce-slow">募集中！</span>
+                <p class="text-soft-black font-medium">
+                    <a href="#planning"
+                        class="underline decoration-sakura-dark underline-offset-4 hover:text-sakura-dark transition-colors">
+                        2026年生誕祭メッセージを受付中です！詳細はこちら 🎉
+                    </a>
+                </p>
+            </div>
+        </section>
+
+        <!-- Schedule Section -->
+        <section id="schedule"
+            class="py-20 px-4 max-w-4xl mx-auto fade-up opacity-0 translate-y-10 transition-all duration-1000">
+            <h3 class="text-2xl font-bold text-center text-soft-brown mb-12 tracking-[0.3em] uppercase">
+                Schedule
+            </h3>
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden p-6 md:p-8">
+                <ul class="space-y-4">
+                    <li
+                        class="flex flex-col md:flex-row gap-2 md:gap-6 border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                        <span class="text-sm text-gray-400 font-mono w-32">2026.12.19</span>
+                        <span
+                            class="bg-sakura-pink text-sakura-dark text-xs px-2 py-1 rounded w-fit h-fit">Birthday</span>
+                        <p class="text-sm md:text-base font-medium">幸阪茉里乃 生誕祭 2026</p>
+                    </li>
+                    <li
+                        class="flex flex-col md:flex-row gap-2 md:gap-6 border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                        <span class="text-sm text-gray-400 font-mono w-32">2026.03.15</span>
+                        <span class="bg-pearl-green text-teal-600 text-xs px-2 py-1 rounded w-fit h-fit">Meet &
+                            Greet</span>
+                        <p class="text-sm md:text-base font-medium">9th Single ミート＆グリート受付開始</p>
+                    </li>
+                    <li
+                        class="flex flex-col md:flex-row gap-2 md:gap-6 border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                        <span class="text-sm text-gray-400 font-mono w-32">2026.02.25</span>
+                        <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded w-fit h-fit">Media</span>
+                        <p class="text-sm md:text-base font-medium">雑誌「blt graph.」掲載</p>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- About & Profile Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto px-4 py-20">
+            <!-- About -->
+            <section id="about"
+                class="bg-white p-8 rounded-3xl shadow-sm border border-sakura-pink/20 fade-up opacity-0 translate-y-10 transition-all duration-1000 delay-100">
+                <h3 class="text-lg font-bold text-soft-brown mb-8 tracking-[0.2em] uppercase flex items-center">
+                    <span class="w-1.5 h-1.5 bg-sakura-dark rounded-full mr-3"></span>
+                    About Us
+                </h3>
+                <p class="text-gray-600 leading-8">
+                    「まりのたいむず」公式サイトへようこそ。<br>
+                    ここは、櫻坂46 幸阪茉里乃さんを応援する団体「まりのたいむず」の公式サイト（兼非公式ファンサイト）です。<br>
+                    <br>
+                    彼女の魅力をより多くの人に知ってもらうため、<br>
+                    そしてファンの皆さんが情報を共有できる場所として運営しています。<br>
+                    <br>
+                    まったりと、でも熱く。<br>
+                    彼女の坂道を一緒に歩んでいきましょう。
+                </p>
+            </section>
+
+            <!-- Profile -->
+            <section id="profile"
+                class="bg-white p-8 rounded-3xl shadow-sm border border-pearl-green/20 fade-up opacity-0 translate-y-10 transition-all duration-1000 delay-200">
+                <h3 class="text-xl font-bold text-soft-brown mb-6 flex items-center">
+                    <span class="w-2 h-6 bg-pearl-dark rounded-full mr-3"></span>
+                    Profile
+                </h3>
+                <div class="flex gap-6 items-start">
+                    <div class="w-24 h-24 md:w-32 md:h-32 bg-gray-200 rounded-full flex-shrink-0 overflow-hidden">
+                        <!-- Profile Image Placeholder -->
+                        <img src="https://placehold.jp/150x150.png" alt="幸阪茉里乃 プロフィール画像"
+                            class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-soft-black">幸阪 茉里乃</h4>
+                        <span class="text-sm text-gray-400">Kosaka Marino</span>
+                        <ul class="mt-4 space-y-2 text-sm text-gray-600">
+                            <li>🎂 生年月日：2002年12月19日</li>
+                            <li>🌟 星座：いて座</li>
+                            <li>📍 出身地：三重県</li>
+                            <li>🩸 血液型：O型</li>
+                            <li>🌸 ペンライトカラー：サクラピンク×パールグリーン</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- History Section -->
+        <section id="history"
+            class="py-20 px-4 max-w-4xl mx-auto fade-up opacity-0 translate-y-10 transition-all duration-1000">
+            <h3 class="text-2xl font-bold text-center text-soft-brown mb-16 tracking-[0.3em] uppercase">
+                Marino's Log
+            </h3>
+
+            <div id="history-list-preview"
+                class="relative border-l-2 border-sakura-pink ml-4 md:ml-10 space-y-10 pl-6 md:pl-10 mb-12">
+                <!-- Injected by JS -->
+            </div>
+
+            <div class="text-center">
+                <a href="log.html"
+                    class="inline-block bg-sakura-pink text-white px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-pearl-green hover:text-teal-800 transition-all duration-300 transform hover:-translate-y-1">
+                    View More &rarr;
+                </a>
+            </div>
+        </section>
+
+        <!-- Gallery Preview Section -->
+        <section id="gallery-preview"
+            class="py-20 px-4 max-w-6xl mx-auto fade-up opacity-0 translate-y-10 transition-all duration-1000">
+            <h3 class="text-2xl font-bold text-center text-soft-brown mb-16 tracking-[0.3em] uppercase">
+                Gallery Preview
+            </h3>
+
+            <!-- Grid Container for Gallery Preview (3 items) -->
+            <div id="gallery-preview-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                <!-- Injected by JS -->
+            </div>
+
+            <!-- Explore Gallery Button -->
+            <div class="text-center">
+                <a href="gallery.html"
+                    class="inline-block bg-sakura-pink text-white px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-pearl-green hover:text-teal-800 transition-all duration-300 transform hover:-translate-y-1">
+                    View More &rarr;
+                </a>
+            </div>
+        </section>
+
+        <!-- Our Activities Preview Section -->
+        <section id="activities"
+            class="py-20 px-4 max-w-4xl mx-auto fade-up opacity-0 translate-y-10 transition-all duration-1000">
+            <h3 class="text-2xl font-bold text-center text-soft-brown mb-16 tracking-[0.3em] uppercase">
+                Our Activities
+            </h3>
+
+            <!-- Fan Projects Timeline Preview -->
+            <div id="activities-timeline-preview"
+                class="relative border-l-2 border-pearl-dark ml-4 md:ml-10 space-y-10 pl-6 md:pl-10 mb-12">
+                <!-- Injected by JS -->
+            </div>
+
+            <div class="text-center">
+                <a href="activities.html"
+                    class="inline-block bg-sakura-pink text-white px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-pearl-green hover:text-teal-800 transition-all duration-300 transform hover:-translate-y-1">
+                    View More &rarr;
+                </a>
+            </div>
+        </section>
+
+        <!-- Our Journal Preview Section -->
+        <section id="journal"
+            class="py-20 px-4 max-w-6xl mx-auto fade-up opacity-0 translate-y-10 transition-all duration-1000 bg-gray-50/50">
+            <h3 class="text-2xl font-bold text-center text-soft-brown mb-16 tracking-[0.3em] uppercase">
+                Our Journal
+            </h3>
+
+            <!-- News/Blog Grid Preview -->
+            <div id="journal-grid-preview" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                <!-- Cards will be injected here by JS -->
+            </div>
+
+            <div class="text-center">
+                <a href="journal.html"
+                    class="inline-block bg-sakura-pink text-white px-10 py-4 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-pearl-green hover:text-teal-800 transition-all duration-300 transform hover:-translate-y-1">
+                    View More &rarr;
+                </a>
+            </div>
+        </section>
+
+        <!-- Official Links -->
+        <section id="links" class="py-20 bg-gray-50 text-center">
+            <div class="max-w-6xl mx-auto px-4">
+                <h3 class="text-2xl font-bold text-center text-soft-brown mb-12 tracking-[0.3em] uppercase">
+                    Official Links
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <a href="https://sakurazaka46.com/" target="_blank"
+                        class="bg-white p-6 border border-gray-100 rounded-2xl hover:bg-sakura-pink/10 hover:border-sakura-pink transition-all flex flex-col items-center justify-center gap-3 group shadow-sm hover:shadow-md">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">🌸</span>
+                        <span class="text-sm font-bold text-gray-700 tracking-wider">Official Website</span>
+                    </a>
+                    <a href="https://sakurazaka46.com/s/s46/diary/blog/list?ima=0000&ct=56" target="_blank"
+                        class="bg-white p-6 border border-gray-100 rounded-2xl hover:bg-sakura-pink/10 hover:border-sakura-pink transition-all flex flex-col items-center justify-center gap-3 group shadow-sm hover:shadow-md">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">📱</span>
+                        <span class="text-sm font-bold text-gray-700 tracking-wider">Official Blog</span>
+                        <span class="text-xs text-sakura-dark font-bold">#marinoblog</span>
+                    </a>
+                    <a href="https://www.youtube.com/@sakurazaka46SMEJ" target="_blank"
+                        class="bg-white p-6 border border-gray-100 rounded-2xl hover:bg-sakura-pink/10 hover:border-sakura-pink transition-all flex flex-col items-center justify-center gap-3 group shadow-sm hover:shadow-md">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">📺</span>
+                        <span class="text-sm font-bold text-gray-700 tracking-wider">Official YouTube</span>
+                    </a>
+                    <a href="https://x.com/hashtag/marinotalk" target="_blank"
+                        class="bg-white p-6 border border-gray-100 rounded-2xl hover:bg-sakura-pink/10 hover:border-sakura-pink transition-all flex flex-col items-center justify-center gap-3 group shadow-sm hover:shadow-md">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">💬</span>
+                        <span class="text-sm font-bold text-gray-700 tracking-wider">トークタグ</span>
+                        <span class="text-xs text-sakura-dark font-bold">#marinotalk</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="py-20 bg-white text-center border-t border-gray-100">
+            <div class="max-w-4xl mx-auto px-4">
+                <h3 class="text-xl font-bold text-soft-brown mb-8 tracking-[0.2em] uppercase">Contact Us</h3>
+                <p class="text-sm text-gray-500 mb-6">お問い合わせは公式Twitter（X）のDMまでお願いします。</p>
+                <a href="https://x.com/marino_times" target="_blank"
+                    class="inline-flex items-center gap-2 bg-[#1DA1F2] text-white px-6 py-2 rounded-full font-bold hover:bg-[#0c85d0] transition-colors shadow-sm hover:shadow-md">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+                    </svg>
+                    DMを送る
+                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="bg-gray-50 border-t border-gray-200 py-8 text-center text-xs text-gray-400">
+            <p class="mb-2">© 2026 まりのたいむず. All Rights Reserved.</p>
+            <p>※当サイトは非公式ファンサイトです。所属事務所および関係者様とは一切関係ありません。</p>
+        </footer>
+
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+</body>
+
+</html>

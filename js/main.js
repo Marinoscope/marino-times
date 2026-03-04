@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Our Journal (News/Blog) — microCMS から非同期取得
     initJournal();
 
+    // 記事詳細ページ（article.html）
+    if (document.getElementById('article-content')) initArticle();
+
     // Marino's Log (History)
     if (document.getElementById('history-list-preview')) renderHistoryPreview();
     if (document.getElementById('history-list-full')) renderHistoryFull();
@@ -235,9 +238,12 @@ async function initJournal() {
 
 // カードHTMLを生成する共通関数
 function createJournalCardHTML(item) {
+    // microCMSから取得した記事（idがある）はarticle.htmlへ、フォールバックは外部linkへ
+    const href = (item.id && MICROCMS_API_KEY !== 'YOUR_API_KEY') ? `article.html?id=${item.id}` : (item.link || '#');
+    const target = href.startsWith('article.html') ? '_self' : '_blank';
     return `
         <article class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden group">
-            <a href="${item.link}" target="_blank" class="block h-full">
+            <a href="${href}" target="${target}" class="block h-full">
                 <div class="relative overflow-hidden h-48 bg-gray-100">
                     <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     ${item.category ? `<span class="absolute top-3 left-3 bg-white/90 px-3 py-1 text-xs font-bold rounded shadow-sm text-sakura-dark tracking-wider">${item.category}</span>` : ''}
@@ -249,6 +255,65 @@ function createJournalCardHTML(item) {
             </a>
         </article>
     `;
+}
+
+// 記事詳細ページの初期化（article.html用）
+async function initArticle() {
+    const container = document.getElementById('article-content');
+    if (!container) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const articleId = params.get('id');
+
+    if (!articleId) {
+        container.innerHTML = '<p class="text-sm text-gray-400 text-center py-16">記事が見つかりませんでした。</p>';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${MICROCMS_ENDPOINT}/${articleId}`, {
+            headers: { 'X-MICROCMS-API-KEY': MICROCMS_API_KEY }
+        });
+
+        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+        const article = await response.json();
+        document.title = `${article.title} - まりのたいむず`;
+
+        container.innerHTML = `
+            ${article.thumbnail ? `
+            <div class="w-full overflow-hidden rounded-2xl mb-8 bg-gray-100">
+                <img src="${article.thumbnail.url}" alt="${article.title}" class="w-full h-auto object-cover">
+            </div>` : ''}
+
+            <div class="mb-8">
+                <div class="flex items-center gap-3 mb-4">
+                    ${article.category ? `<span class="bg-sakura-pink px-3 py-1 text-xs font-bold rounded-full text-sakura-dark tracking-wider">${article.category}</span>` : ''}
+                    <time class="text-xs text-gray-400 font-mono">${formatDate(article.publishedAt)}</time>
+                </div>
+                <h1 class="text-2xl md:text-3xl font-bold text-soft-brown leading-relaxed">${article.title}</h1>
+            </div>
+
+            <div class="article-body text-gray-700 text-sm md:text-base">
+                ${article.body || '<p class="text-gray-400">本文はありません。</p>'}
+            </div>
+
+            <div class="mt-16 pt-8 border-t border-gray-100 text-center">
+                <a href="journal.html"
+                    class="inline-block bg-sakura-dark text-white px-8 py-3 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-pink-400 transition-all duration-300 transform hover:-translate-y-1 text-sm">
+                    &larr; 記事一覧に戻る
+                </a>
+            </div>
+        `;
+    } catch (error) {
+        console.error('[Article] 記事の取得に失敗しました:', error);
+        container.innerHTML = `
+            <div class="text-center py-16">
+                <p class="text-gray-400 text-sm mb-4">記事の読み込みに失敗しました。</p>
+                <a href="journal.html" class="text-sakura-dark text-sm font-bold hover:underline">&larr; 記事一覧に戻る</a>
+            </div>
+        `;
+    }
 }
 
 /* =========================================

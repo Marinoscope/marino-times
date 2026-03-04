@@ -238,9 +238,25 @@ async function initJournal() {
 
 // カードHTMLを生成する共通関数
 function createJournalCardHTML(item) {
-    // microCMSから取得した記事（idがある）はarticle.htmlへ、フォールバックは外部linkへ
-    const href = (item.id && MICROCMS_API_KEY !== 'YOUR_API_KEY') ? `article.html?id=${item.id}` : (item.link || '#');
-    const target = href.startsWith('article.html') ? '_self' : '_blank';
+    // リンク先の決定:
+    // 1. microCMS記事でlinkあり・bodyなし → 外部URLへ直接飛ばす
+    // 2. microCMS記事でbodyあり → article.htmlで本文表示（linkがあれば詳細ページ内にボタン表示）
+    // 3. フォールバック → 外部linkへ
+    const isMicroCMS = item.id && MICROCMS_API_KEY !== 'YOUR_API_KEY';
+    let href, target;
+    if (isMicroCMS && item.link && item.link !== '#' && !item.body) {
+        // 本文なし＋リンクあり → 外部URLへ直接
+        href = item.link;
+        target = '_blank';
+    } else if (isMicroCMS) {
+        // 本文あり or リンクなし → 記事詳細ページへ
+        href = `article.html?id=${item.id}`;
+        target = '_self';
+    } else {
+        // フォールバック
+        href = item.link || '#';
+        target = '_blank';
+    }
     return `
         <article class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden group">
             <a href="${href}" target="${target}" class="block h-full">
@@ -298,7 +314,12 @@ async function initArticle() {
                 ${article.body || '<p class="text-gray-400">本文はありません。</p>'}
             </div>
 
-            <div class="mt-16 pt-8 border-t border-gray-100 text-center">
+            <div class="mt-16 pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-center gap-4">
+                ${(article.link && article.link !== '#') ? `
+                <a href="${article.link}" target="_blank"
+                    class="inline-block bg-soft-brown text-white px-8 py-3 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-amber-800 transition-all duration-300 transform hover:-translate-y-1 text-sm">
+                    元の記事を見る &rarr;
+                </a>` : ''}
                 <a href="journal.html"
                     class="inline-block bg-sakura-dark text-white px-8 py-3 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-pink-400 transition-all duration-300 transform hover:-translate-y-1 text-sm">
                     &larr; 記事一覧に戻る

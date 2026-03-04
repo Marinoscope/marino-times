@@ -317,7 +317,7 @@ const fallbackGalleryData = [
 ];
 
 // 現在の状態
-let currentMVFilter = 'all'; // MVの絞り込み: 'all', 'single', 'album'
+let currentGalleryFilter = 'all'; // 全体の絞り込み: 'all', 'single', 'album', 'live', 'others'
 let currentGallerySort = 'desc'; // 全体の並び替え: 'desc'(新しい順), 'asc'(古い順)
 
 // YouTube URLから Video ID を抽出するUtility
@@ -364,19 +364,27 @@ function createGalleryCardHTML(item) {
             <div class="mt-auto w-full overflow-hidden rounded-xl bg-gray-100" style="aspect-ratio: 16/9;">
                 <iframe class="w-full h-full" src="https://www.youtube.com/embed/${youtubeId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
             </div>
-            ` : ''}
+            ` : `
+            <div class="mt-auto w-full flex items-center justify-center rounded-xl bg-gray-100/80 border border-gray-100" style="aspect-ratio: 16/9;">
+                <span class="text-sm font-bold text-gray-400 tracking-widest">準備中</span>
+            </div>
+            `}
         </div>
     `;
 }
 
-// トップページ用のプレビュー表示（シングルの新しい順3件）
+// トップページ用のプレビュー表示（ランダムに3件抽出）
 function renderGalleryPreview() {
     const listContainer = document.getElementById('gallery-preview-list');
     if (!listContainer) return;
 
-    // データがフェッチ前かもしれないためハードコードで一旦表示しておく（実際の運用ではロード完了を待つべきですがここでは簡易化）
-    const singles = fallbackGalleryData.filter(item => item.category === 'single');
-    const previewData = [...singles].sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate)).slice(0, 3);
+    // 現在の最新の全データ(fetch後ならallGalleryData, 前ならfallbackGalleryData)を使用
+    const dataToUse = allGalleryData.length > 0 ? allGalleryData : fallbackGalleryData;
+
+    // UUID等の厳密性を持たせずに配列をシャッフルして3件取得
+    const shuffled = [...dataToUse].sort(() => 0.5 - Math.random());
+    const previewData = shuffled.slice(0, 3);
+
     const html = previewData.map(item => createGalleryCardHTML(item)).join('');
     listContainer.innerHTML = html;
 }
@@ -384,16 +392,16 @@ function renderGalleryPreview() {
 // Galleryページ：初期化＆データフェッチ
 async function initGallery() {
     try {
-        if (!SHEET_CSV_URL) {
-            throw new Error("CSV URL is not set.");
+        // ローカル環境(file://)からのアクセスの場合のみCORSが発生するためプロキシを通し、
+        // 本番環境(http/https)では直接Google Sheetsから取得する（不要なプロキシ起因のエラーを防ぐため）
+        let fetchUrl = SHEET_CSV_URL;
+        if (window.location.protocol === 'file:') {
+            fetchUrl = 'https://corsproxy.io/?' + encodeURIComponent(SHEET_CSV_URL);
         }
-
-        // ローカル環境(file://)からのアクセスの場合CORSエラーが発生するため、クロスオリジンを許可するプロキシを通す
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(SHEET_CSV_URL);
 
         // Google Sheetsの公開URLはリダイレクトが発生するため、redirect: 'follow' を明示する
         // 取得したテキストの最初の文字が `<` ならエラーとみなす
-        const response = await fetch(proxyUrl, { redirect: 'follow' });
+        const response = await fetch(fetchUrl, { redirect: 'follow' });
         if (!response.ok) throw new Error("Failed to fetch CSV data.");
 
         const text = await response.text();
@@ -430,12 +438,21 @@ async function initGallery() {
 
 // 共通ソート機能を使用してすべてのグリッドを再描画
 function renderAllGalleryGrids() {
+    // 選択されたフィルタに応じて、大セクションの表示・非表示を切り替え
+    const sectionMv = document.getElementById('section-mv');
+    const sectionLive = document.getElementById('section-live');
+    const sectionOthers = document.getElementById('section-others');
+
+    if (sectionMv) sectionMv.style.display = (currentGalleryFilter === 'all' || currentGalleryFilter === 'single' || currentGalleryFilter === 'album') ? 'block' : 'none';
+    if (sectionLive) sectionLive.style.display = (currentGalleryFilter === 'all' || currentGalleryFilter === 'live') ? 'block' : 'none';
+    if (sectionOthers) sectionOthers.style.display = (currentGalleryFilter === 'all' || currentGalleryFilter === 'others') ? 'block' : 'none';
+
     // 1. MV グリッド (Single / Album フィルタ適用)
     const mvContainer = document.getElementById('gallery-mv-grid');
     if (mvContainer) {
         let mvData = allGalleryData.filter(item => item.category === 'single' || item.category === 'album');
-        if (currentMVFilter !== 'all') {
-            mvData = mvData.filter(item => item.category === currentMVFilter);
+        if (currentGalleryFilter === 'single' || currentGalleryFilter === 'album') {
+            mvData = mvData.filter(item => item.category === currentGalleryFilter);
         }
         mvData.sort((a, b) => currentGallerySort === 'asc' ? new Date(a.publishDate) - new Date(b.publishDate) : new Date(b.publishDate) - new Date(a.publishDate));
 
@@ -473,10 +490,10 @@ function renderAllGalleryGrids() {
     }
 }
 
-// MV 絞り込み
-function filterMV(category) {
-    currentMVFilter = category;
-    renderAllGalleryGrids(); // MVグリッドのみに影響しますが統括関数を呼び出す
+// ギャラリー全体 絞り込み
+function filterGallery(category) {
+    currentGalleryFilter = category;
+    renderAllGalleryGrids();
     updateFilterButtons(category);
 }
 
@@ -494,6 +511,7 @@ function updateFilterButtons(activeCategory) {
         'single': document.getElementById('filter-single'),
         'album': document.getElementById('filter-album'),
         'live': document.getElementById('filter-live'),
+        'others': document.getElementById('filter-others')
     };
     const activeClass = 'gallery-filter-btn px-4 py-2 text-xs font-bold rounded-full border-2 border-soft-brown bg-soft-brown text-white transition-all hover:shadow-md';
     const inactiveClass = 'gallery-filter-btn px-4 py-2 text-xs font-bold rounded-full border-2 border-soft-brown text-soft-brown bg-white transition-all hover:shadow-md';

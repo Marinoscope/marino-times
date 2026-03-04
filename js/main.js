@@ -12,9 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Our Journal (News/Blog)
-    if (document.getElementById('journal-grid-preview')) renderActivityPreview();
-    if (document.getElementById('journal-grid-full')) renderActivityFull();
+    // Our Journal (News/Blog) — microCMS から非同期取得
+    initJournal();
 
     // Marino's Log (History)
     if (document.getElementById('history-list-preview')) renderHistoryPreview();
@@ -93,11 +92,19 @@ function initScrollObserver() {
 
 
 /* =========================================
-   Activity / News Data Rendering
+   microCMS 設定
    ========================================= */
-const activityData = [
+const MICROCMS_API_KEY = 'hHa79ATpW9X7o6WxiZhw7AVquSgs1Niw0uYi';  // TODO: ここにmicroCMSのAPIキーを入力してください
+const MICROCMS_ENDPOINT = 'https://marino-times.microcms.io/apis/journal';  // TODO: ここにエンドポイントURLを入力してください
+
+/* =========================================
+   Our Journal (News/Blog) Data & Rendering
+   ========================================= */
+
+// フォールバック用データ（microCMS取得失敗時に使用）
+const fallbackJournalData = [
     {
-        id: 1,
+        id: '1',
         date: '2026.02.15',
         category: 'Blog',
         title: '最近のこと。',
@@ -105,7 +112,7 @@ const activityData = [
         link: 'https://sakurazaka46.com/s/s46/diary/blog/list?ima=0000&ct=56'
     },
     {
-        id: 2,
+        id: '2',
         date: '2026.02.10',
         category: 'Media',
         title: '「そこ曲がったら、櫻坂？」出演',
@@ -113,7 +120,7 @@ const activityData = [
         link: '#'
     },
     {
-        id: 3,
+        id: '3',
         date: '2026.02.01',
         category: 'Event',
         title: '8th Single ミート＆グリート 完売御礼',
@@ -121,7 +128,7 @@ const activityData = [
         link: '#'
     },
     {
-        id: 4,
+        id: '4',
         date: '2026.01.20',
         category: 'Magazine',
         title: '「up PLUS」3月号 ソログラビア',
@@ -129,7 +136,7 @@ const activityData = [
         link: '#'
     },
     {
-        id: 5,
+        id: '5',
         date: '2026.01.01',
         category: 'Blog',
         title: 'あけましておめでとうございます🎍',
@@ -137,7 +144,7 @@ const activityData = [
         link: '#'
     },
     {
-        id: 6,
+        id: '6',
         date: '2025.12.25',
         category: 'Message',
         title: 'メリークリスマス🎄',
@@ -146,14 +153,94 @@ const activityData = [
     }
 ];
 
-// 共通のActivity（Blog/News）カード生成処理
-function createActivityCardHTML(item) {
+// microCMS から記事データを取得する関数
+async function fetchJournalData(limit) {
+    // APIキーが未設定の場合はフォールバックを返す
+    if (!MICROCMS_API_KEY || MICROCMS_API_KEY === 'YOUR_API_KEY' ||
+        !MICROCMS_ENDPOINT || MICROCMS_ENDPOINT.includes('YOUR_SERVICE')) {
+        console.warn('[Journal] microCMS APIキーまたはエンドポイントが未設定のため、フォールバックデータを使用します。');
+        return null;
+    }
+
+    try {
+        let url = MICROCMS_ENDPOINT;
+        const params = [];
+        if (limit) params.push(`limit=${limit}`);
+        params.push('orders=-publishedAt'); // 新しい順
+        url += '?' + params.join('&');
+
+        const response = await fetch(url, {
+            headers: { 'X-MICROCMS-API-KEY': MICROCMS_API_KEY }
+        });
+
+        if (!response.ok) {
+            throw new Error(`microCMS API Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // microCMS のレスポンスを内部形式に変換
+        return data.contents.map(item => ({
+            id: item.id,
+            date: formatDate(item.publishedAt),
+            category: item.category || '',
+            title: item.title || '',
+            image: item.thumbnail ? item.thumbnail.url : 'https://placehold.jp/400x300.png?text=No+Image',
+            link: item.link || '#',
+            body: item.body || ''
+        }));
+    } catch (error) {
+        console.warn('[Journal] microCMSからの取得に失敗しました。フォールバックデータを使用します。', error);
+        return null;
+    }
+}
+
+// microCMS の publishedAt (ISO 8601) を "YYYY.MM.DD" 形式に変換
+function formatDate(isoString) {
+    if (!isoString) return '';
+    const d = new Date(isoString);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}.${mm}.${dd}`;
+}
+
+// Journal 全体の初期化（fetch → render）
+async function initJournal() {
+    const previewContainer = document.getElementById('journal-grid-preview');
+    const fullContainer = document.getElementById('journal-grid-full');
+
+    // ローディング表示
+    if (previewContainer) {
+        previewContainer.innerHTML = '<p class="text-sm text-gray-400 col-span-full text-center py-8">読み込み中...</p>';
+    }
+    if (fullContainer) {
+        fullContainer.innerHTML = '<p class="text-sm text-gray-400 col-span-full text-center py-8">読み込み中...</p>';
+    }
+
+    // プレビュー（トップページ 最新3件）
+    if (previewContainer) {
+        const data = await fetchJournalData(3);
+        const items = data || fallbackJournalData.slice(0, 3);
+        previewContainer.innerHTML = items.map(item => createJournalCardHTML(item)).join('');
+    }
+
+    // 全件表示（journal.html）
+    if (fullContainer) {
+        const data = await fetchJournalData();
+        const items = data || fallbackJournalData;
+        fullContainer.innerHTML = items.map(item => createJournalCardHTML(item)).join('');
+    }
+}
+
+// カードHTMLを生成する共通関数
+function createJournalCardHTML(item) {
     return `
         <article class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden group">
             <a href="${item.link}" target="_blank" class="block h-full">
                 <div class="relative overflow-hidden h-48 bg-gray-100">
                     <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    <span class="absolute top-3 left-3 bg-white/90 px-3 py-1 text-xs font-bold rounded shadow-sm text-sakura-dark tracking-wider">${item.category}</span>
+                    ${item.category ? `<span class="absolute top-3 left-3 bg-white/90 px-3 py-1 text-xs font-bold rounded shadow-sm text-sakura-dark tracking-wider">${item.category}</span>` : ''}
                 </div>
                 <div class="p-5">
                     <time class="text-xs text-gray-400 font-mono block mb-3">${item.date}</time>
@@ -162,26 +249,6 @@ function createActivityCardHTML(item) {
             </a>
         </article>
     `;
-}
-
-// プレビュー表示（最新3件）
-function renderActivityPreview() {
-    const listContainer = document.getElementById('journal-grid-preview');
-    if (!listContainer) return;
-
-    // 最新のニュースから3件を表示
-    const previewData = activityData.slice(0, 3);
-    const html = previewData.map(item => createActivityCardHTML(item)).join('');
-    listContainer.innerHTML = html;
-}
-
-// 全件表示
-function renderActivityFull() {
-    const listContainer = document.getElementById('journal-grid-full');
-    if (!listContainer) return;
-
-    const html = activityData.map(item => createActivityCardHTML(item)).join('');
-    listContainer.innerHTML = html;
 }
 
 /* =========================================

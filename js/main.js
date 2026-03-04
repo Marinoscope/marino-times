@@ -566,19 +566,29 @@ async function initSchedule() {
             const cols = parseCSVRow(rows[i]);
             if (cols.length >= 4) { // 最低4列(date, time, category, title)
                 const dateStr = cols[0] || '';
-                // JSTの現在日時と比較するためのDateオブジェクトを作成 (2026.03.15 -> 2026-03-15T23:59:59+09:00のように丸1日は残す)
-                let dateObj = null;
-                if (dateStr.match(/^\d{4}\.\d{2}\.\d{2}$/)) {
-                    const [y, m, d] = dateStr.split('.');
+
+                // スラッシュやハイフンをドットに変換
+                const normalizedDateStr = dateStr.replace(/[\/\-]/g, '.');
+
+                let dateTimestamp = 0;
+                let formattedDate = dateStr;
+
+                if (normalizedDateStr.match(/^\d{4}\.\d{1,2}\.\d{1,2}$/)) {
+                    const [y, m, d] = normalizedDateStr.split('.');
+
+                    // カレンダーでのマッチング用に表示フォーマットを 0埋めに統一 (YYYY.MM.DD)
+                    const mm = String(parseInt(m)).padStart(2, '0');
+                    const dd = String(parseInt(d)).padStart(2, '0');
+                    formattedDate = `${y}.${mm}.${dd}`;
+
                     // JST(UTC+9) の 23:59:59 は UTC の 14:59:59
                     // ブラウザ間で ISO文字列のパースが怪しいケースがあるため、数値で直接 Date を生成して getTime() を取る
-                    const utcTimestamp = Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), 14, 59, 59);
-                    dateObj = new Date(utcTimestamp);
+                    dateTimestamp = Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), 14, 59, 59);
                 }
 
                 parsedData.push({
-                    dateTimestamp: dateObj ? dateObj.getTime() : 0, // ソート・フィルタリング用
-                    formattedDate: dateStr, // 表示用
+                    dateTimestamp, // ソート・フィルタリング用
+                    formattedDate, // 表示用・カレンダーマッチング用
                     time: cols[1] || '',
                     category: cols[2] || 'Other',
                     title: cols[3] || '',
@@ -588,10 +598,13 @@ async function initSchedule() {
         }
 
         const fallbackMapper = (item) => {
-            const [y, m, d] = item.date.split('.');
+            const normalizedDateStr = item.date.replace(/[\/\-]/g, '.');
+            const [y, m, d] = normalizedDateStr.split('.');
+            const mm = String(parseInt(m)).padStart(2, '0');
+            const dd = String(parseInt(d)).padStart(2, '0');
             return {
                 ...item,
-                formattedDate: item.date,
+                formattedDate: `${y}.${mm}.${dd}`,
                 dateTimestamp: Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), 14, 59, 59)
             };
         };
@@ -599,8 +612,11 @@ async function initSchedule() {
     } catch (error) {
         console.warn("Could not load schedule from Google Sheets, using fallback.", error);
         const fallbackMapper = (item) => {
-            const [y, m, d] = item.date.split('.');
-            return { ...item, formattedDate: item.date, dateTimestamp: Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), 14, 59, 59) };
+            const normalizedDateStr = item.date.replace(/[\/\-]/g, '.');
+            const [y, m, d] = normalizedDateStr.split('.');
+            const mm = String(parseInt(m)).padStart(2, '0');
+            const dd = String(parseInt(d)).padStart(2, '0');
+            return { ...item, formattedDate: `${y}.${mm}.${dd}`, dateTimestamp: Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), 14, 59, 59) };
         };
         allScheduleData = fallbackScheduleData.map(fallbackMapper);
     }

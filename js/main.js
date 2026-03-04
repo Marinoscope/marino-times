@@ -24,9 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('activities-timeline-preview')) renderActivitiesPreview();
     if (document.getElementById('activities-timeline')) renderActivitiesFull();
 
-    // Gallery (Music Videos)
+    // Gallery (Music Videos & Others)
     if (document.getElementById('gallery-preview-list')) renderGalleryPreview();
-    if (document.getElementById('gallery-full-list')) renderGallery();
+    if (document.getElementById('gallery-mv-grid')) initGallery();
 });
 
 /* =========================================
@@ -281,53 +281,235 @@ function renderActivitiesFull() {
 /* =========================================
    Gallery Data Rendering
    ========================================= */
-const galleryData = [
-    { title: "なぜ 恋をして来なかったんだろう？ (1st Single)", hasMV: true, youtubeId: "UYx_WxKD8ko" },
-    { title: "思ったよりも寂しくない (2nd Single)", hasMV: true, youtubeId: "ifq7qT6DQf0" },
-    { title: "無言の宇宙 (3rd Single)", hasMV: true, youtubeId: "7GZGTse6dUs" },
-    { title: "僕のジレンマ (4th Single)", hasMV: true, youtubeId: "ZBk4V-uqcXs" },
-    { title: "車間距離 (4th Single)", hasMV: true, youtubeId: "MKXSWXlSOB0" },
-    { title: "Cool (5th Single)", hasMV: true, youtubeId: "XEKPn3WbksE" },
-    { title: "Start over! (6th Single)", hasMV: true, youtubeId: "YJRFD1AdaUE" },
-    { title: "ドローン旋回中 (6th Single)", hasMV: true, youtubeId: "rNwzfyr07SM" },
-    { title: "隙間風よ (7th Single)", hasMV: true, youtubeId: "5Z4emyH-fME" },
-    { title: "油を注せ！ (8th Single)", hasMV: true, youtubeId: "01PkQtmidfs" },
-    { title: "愛し合いなさい (9th Single)", hasMV: true, youtubeId: "MAP3cnAexxM" }
+
+// Google Sheets CSV URL (ユーザーが後で公開URLに差し替える)
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTF_mZSMjo9gB3lHeruGf2jpVfKxMcnVA3TrVNo8Z3RZOJA7cQG9Ilfq5cH8YCSdp31SD5REAM342_d/pub?gid=59471726&single=true&output=csv'; // TODO: ここに公開したCSVのURLを貼り付けてください
+
+// 取得した全動画データを保持する配列
+let allGalleryData = [];
+
+// フォールバック用データ（CSV取得失敗時）
+const fallbackGalleryData = [
+    { title: "なぜ 恋をして来なかったんだろう？", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=S4gEJIyLHlM", publishDate: "2020-11-18", note: "1st single" },
+    { title: "思ったよりも寂しくない", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=D0W44Z3D3wo", publishDate: "2021-03-31", note: "2nd single" },
+    { title: "無言の宇宙", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=7GZGTse6dUs", publishDate: "2021-09-28", note: "3rd single" },
+    { title: "僕のジレンマ", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=ZBk4V-uqcXs", publishDate: "2022-03-24", note: "4th single" },
+    { title: "車間距離", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=MKXSWXlSOB0", publishDate: "2022-03-29", note: "4th single" },
+    { title: "Cool", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=XEKPn3WbksE", publishDate: "2023-02-07", note: "5th single" },
+    { title: "Start over!", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=YJRFD1AdaUE", publishDate: "2023-05-30", note: "6th single" },
+    { title: "ドローン旋回中", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=rNwzfyr07SM", publishDate: "2023-06-21", note: "6th single" },
+    { title: "隙間風よ", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=5Z4emyH-fME", publishDate: "2023-10-10", note: "7th single" },
+    { title: "油を注せ！", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=x9a0_2aGeWU", publishDate: "2024-02-06", note: "8th single" },
+    { title: "愛し合いなさい", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=MAP3cnAexxM", publishDate: "2024-06-12", note: "9th single" },
+    { title: "僕は僕を好きになれない", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=Ktu_LGjGd7A", publishDate: "2024-10-09", note: "10th single" },
+    { title: "Nothing Special", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=WdUBD5slEnc", publishDate: "2025-02-12", note: "11th single" },
+    { title: "港区パセリ", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=aLu4oyQ2zdw", publishDate: "2025-06-11", note: "12th single" },
+    { title: "木枯らしは泣かない", category: "single", youtubeUrl: "https://www.youtube.com/watch?v=aQ1iXj4oXfI", publishDate: "2025-10-15", note: "13th single" },
+    { title: "Addiction", category: "album", youtubeUrl: "https://www.youtube.com/watch?v=ReuFa_D1Vok", publishDate: "2022-07-26", note: "2nd album" },
+    { title: "ドライフルーツ", category: "single", youtubeUrl: "", publishDate: "2026-03-01", note: "14th single" }, // 公開日仮
+    { title: "【いのまり】幸阪の愛爆発！井上と花やしきデート！", category: "others", youtubeUrl: "https://www.youtube.com/watch?v=GDYuXZBT_ic", publishDate: "2024-08-13", note: "" },
+    { title: "【ドッキリ】田村保乃を1日中驚かせてみた！by幸阪茉里乃", category: "others", youtubeUrl: "https://www.youtube.com/watch?v=6aa7Cwg19pk", publishDate: "2024-03-13", note: "" },
+    { title: "【あすけん】目指せ100点！櫻坂46の自炊の腕前を初披露！【料理】", category: "others", youtubeUrl: "https://www.youtube.com/watch?v=ObloX5HXUpk", publishDate: "2025-11-18", note: "" },
+    { title: "【#二期生ずっと一緒】13人全員で一軒家貸し切りBBQ＆プレゼント交換会！", category: "others", youtubeUrl: "https://www.youtube.com/watch?v=QhxUwwhB-b0", publishDate: "2025-12-16", note: "" },
+    { title: "櫻坂46『2nd TOUR 2022 “As you know?”』（for J-LODlive）", category: "live", youtubeUrl: "https://www.youtube.com/watch?v=uxC0v1902dE", publishDate: "2022-11-30", note: "" },
+    { title: "櫻坂46『1st TOUR 2021』（for J-LODlive）", category: "live", youtubeUrl: "https://www.youtube.com/watch?v=P8jb-ENfWB4", publishDate: "2021-12-24", note: "" },
+    { title: "欅坂46 『誰がその鐘を鳴らすのか？』 KEYAKIZAKA46 Live Online", category: "live", youtubeUrl: "https://www.youtube.com/watch?v=fOL3JDWG7aQ", publishDate: "2020-08-29", note: "" }
 ];
+
+// 現在の状態
+let currentMVFilter = 'all'; // MVの絞り込み: 'all', 'single', 'album'
+let currentGallerySort = 'desc'; // 全体の並び替え: 'desc'(新しい順), 'asc'(古い順)
+
+// YouTube URLから Video ID を抽出するUtility
+function extractYouTubeId(url) {
+    if (!url) return null;
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?\n]+)/);
+    return match ? match[1] : null;
+}
+
+// CSVの行をパースする簡単な実装 (カンマ区切り、ダブルクォーテーション対応)
+function parseCSVRow(row) {
+    const result = [];
+    let insideQuotes = false;
+    let currentValue = '';
+    for (let i = 0; i < row.length; i++) {
+        const char = row[i];
+        if (char === '"') {
+            insideQuotes = !insideQuotes;
+        } else if (char === ',' && !insideQuotes) {
+            result.push(currentValue.trim());
+            currentValue = '';
+        } else {
+            currentValue += char;
+        }
+    }
+    result.push(currentValue.trim().replace(/^"|"$/g, ''));
+    return result;
+}
 
 // カードHTMLを生成する共通関数
 function createGalleryCardHTML(item) {
+    const youtubeId = item.youtubeId || extractYouTubeId(item.youtubeUrl);
+
+    // ラベルにはE列の補足情報（1st Singleなど）を表示する
+    const categoryLabel = item.note ? item.note : '';
+
     return `
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-sakura-pink transition-colors group flex flex-col h-full">
-            <h4 class="text-sm font-bold text-soft-brown group-hover:text-sakura-dark transition-colors leading-relaxed mb-4">${item.title}</h4>
-            ${item.hasMV && item.youtubeId ? `
+            <h4 class="text-sm font-bold text-soft-brown group-hover:text-sakura-dark transition-colors leading-relaxed mb-2">${item.title}</h4>
+            <div class="text-xs text-gray-400 font-mono mb-4 flex items-center gap-1.5 min-h-[20px]">
+                ${categoryLabel ? `<span class="inline-flex items-center justify-center bg-gray-100 px-2 py-0.5 rounded-full text-[10px] tracking-wider text-gray-500 uppercase">${categoryLabel}</span>` : ''}
+            </div>
+            ${youtubeId ? `
             <div class="mt-auto w-full overflow-hidden rounded-xl bg-gray-100" style="aspect-ratio: 16/9;">
-                <iframe class="w-full h-full" src="https://www.youtube.com/embed/${item.youtubeId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                <iframe class="w-full h-full" src="https://www.youtube.com/embed/${youtubeId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
             </div>
             ` : ''}
         </div>
     `;
 }
 
-// トップページ用のプレビュー表示（最新3件）
+// トップページ用のプレビュー表示（シングルの新しい順3件）
 function renderGalleryPreview() {
     const listContainer = document.getElementById('gallery-preview-list');
     if (!listContainer) return;
 
-    // 後ろから3件（最新）を取得して反転させて表示するか、そのまま先頭3件にするか。リストに従い、後ろから新しいと仮定して末尾3件を取得して逆順にするなど調整可能。
-    // 今回は配列の末尾3件（最新）を抽出して降順で表示する。
-    const previewData = galleryData.slice(-3).reverse();
+    // データがフェッチ前かもしれないためハードコードで一旦表示しておく（実際の運用ではロード完了を待つべきですがここでは簡易化）
+    const singles = fallbackGalleryData.filter(item => item.category === 'single');
+    const previewData = [...singles].sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate)).slice(0, 3);
     const html = previewData.map(item => createGalleryCardHTML(item)).join('');
     listContainer.innerHTML = html;
 }
 
-// Galleryページ用の全件表示
-function renderGallery() {
-    const listContainer = document.getElementById('gallery-full-list');
-    if (!listContainer) return;
+// Galleryページ：初期化＆データフェッチ
+async function initGallery() {
+    try {
+        if (!SHEET_CSV_URL) {
+            throw new Error("CSV URL is not set.");
+        }
 
-    // 最新のもの（末尾）から表示
-    const fullData = [...galleryData].reverse();
-    const html = fullData.map(item => createGalleryCardHTML(item)).join('');
-    listContainer.innerHTML = html;
+        // ローカル環境(file://)からのアクセスの場合CORSエラーが発生するため、クロスオリジンを許可するプロキシを通す
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(SHEET_CSV_URL);
+
+        // Google Sheetsの公開URLはリダイレクトが発生するため、redirect: 'follow' を明示する
+        // 取得したテキストの最初の文字が `<` ならエラーとみなす
+        const response = await fetch(proxyUrl, { redirect: 'follow' });
+        if (!response.ok) throw new Error("Failed to fetch CSV data.");
+
+        const text = await response.text();
+        if (text.trim().startsWith('<')) {
+            throw new Error("Received HTML instead of CSV. Redirection might have failed or URL might be wrong.");
+        }
+
+        const rows = text.split('\n').filter(row => row.trim() !== '');
+
+        const parsedData = [];
+        // 1行目はヘッダーとみなし、2行目から処理
+        for (let i = 1; i < rows.length; i++) {
+            const cols = parseCSVRow(rows[i]);
+            // A列:タイトル, B列:カテゴリ, C列:URL, D列:公開日, E列:補足
+            if (cols.length >= 4) {
+                parsedData.push({
+                    title: cols[0],
+                    category: cols[1].toLowerCase(),
+                    youtubeUrl: cols[2],
+                    publishDate: cols[3],
+                    note: cols[4] || ''
+                });
+            }
+        }
+
+        allGalleryData = parsedData.length > 0 ? parsedData : fallbackGalleryData;
+    } catch (error) {
+        console.warn("Could not load from Google Sheets, using fallback data.", error);
+        allGalleryData = fallbackGalleryData;
+    }
+
+    renderAllGalleryGrids();
+}
+
+// 共通ソート機能を使用してすべてのグリッドを再描画
+function renderAllGalleryGrids() {
+    // 1. MV グリッド (Single / Album フィルタ適用)
+    const mvContainer = document.getElementById('gallery-mv-grid');
+    if (mvContainer) {
+        let mvData = allGalleryData.filter(item => item.category === 'single' || item.category === 'album');
+        if (currentMVFilter !== 'all') {
+            mvData = mvData.filter(item => item.category === currentMVFilter);
+        }
+        mvData.sort((a, b) => currentGallerySort === 'asc' ? new Date(a.publishDate) - new Date(b.publishDate) : new Date(b.publishDate) - new Date(a.publishDate));
+
+        if (mvData.length === 0) {
+            mvContainer.innerHTML = '<p class="text-sm text-gray-400 col-span-full text-center py-8">該当する動画はありません</p>';
+        } else {
+            mvContainer.innerHTML = mvData.map(item => createGalleryCardHTML(item)).join('');
+        }
+    }
+
+    // 2. Live Movies グリッド
+    const liveContainer = document.getElementById('gallery-live-grid');
+    if (liveContainer) {
+        let liveData = allGalleryData.filter(item => item.category === 'live');
+        liveData.sort((a, b) => currentGallerySort === 'asc' ? new Date(a.publishDate) - new Date(b.publishDate) : new Date(b.publishDate) - new Date(a.publishDate));
+
+        if (liveData.length === 0) {
+            liveContainer.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-400 text-sm">準備中です</p><p class="text-gray-300 text-xs mt-2">動画が追加され次第、こちらに表示されます</p></div>';
+        } else {
+            liveContainer.innerHTML = liveData.map(item => createGalleryCardHTML(item)).join('');
+        }
+    }
+
+    // 3. Others グリッド
+    const othersContainer = document.getElementById('gallery-others-grid');
+    if (othersContainer) {
+        let othersData = allGalleryData.filter(item => item.category === 'others');
+        othersData.sort((a, b) => currentGallerySort === 'asc' ? new Date(a.publishDate) - new Date(b.publishDate) : new Date(b.publishDate) - new Date(a.publishDate));
+
+        if (othersData.length === 0) {
+            othersContainer.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-400 text-sm">準備中です</p><p class="text-gray-300 text-xs mt-2">動画が追加され次第、こちらに表示されます</p></div>';
+        } else {
+            othersContainer.innerHTML = othersData.map(item => createGalleryCardHTML(item)).join('');
+        }
+    }
+}
+
+// MV 絞り込み
+function filterMV(category) {
+    currentMVFilter = category;
+    renderAllGalleryGrids(); // MVグリッドのみに影響しますが統括関数を呼び出す
+    updateFilterButtons(category);
+}
+
+// ギャラリー全体 並び替え
+function sortGallery(direction) {
+    currentGallerySort = direction;
+    renderAllGalleryGrids();
+    updateSortButtons(direction);
+}
+
+// 絞り込みボタンのアクティブ状態切り替え
+function updateFilterButtons(activeCategory) {
+    const buttons = {
+        'all': document.getElementById('filter-all'),
+        'single': document.getElementById('filter-single'),
+        'album': document.getElementById('filter-album'),
+        'live': document.getElementById('filter-live'),
+    };
+    const activeClass = 'gallery-filter-btn px-4 py-2 text-xs font-bold rounded-full border-2 border-soft-brown bg-soft-brown text-white transition-all hover:shadow-md';
+    const inactiveClass = 'gallery-filter-btn px-4 py-2 text-xs font-bold rounded-full border-2 border-soft-brown text-soft-brown bg-white transition-all hover:shadow-md';
+
+    Object.entries(buttons).forEach(([key, btn]) => {
+        if (btn) btn.className = key === activeCategory ? activeClass : inactiveClass;
+    });
+}
+
+// 並び替えボタンのアクティブ状態切り替え
+function updateSortButtons(direction) {
+    const btnNew = document.getElementById('sort-new');
+    const btnOld = document.getElementById('sort-old');
+    const activeClass = 'gallery-sort-btn px-4 py-2 text-xs font-bold rounded-full border-2 border-sakura-dark bg-sakura-dark text-white transition-all hover:shadow-md';
+    const inactiveClass = 'gallery-sort-btn px-4 py-2 text-xs font-bold rounded-full border-2 border-sakura-dark text-sakura-dark bg-white transition-all hover:shadow-md';
+
+    if (btnNew) btnNew.className = direction === 'desc' ? activeClass : inactiveClass;
+    if (btnOld) btnOld.className = direction === 'asc' ? activeClass : inactiveClass;
 }

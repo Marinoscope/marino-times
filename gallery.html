@@ -62,8 +62,8 @@
                 <a href="log.html" class="hover:text-sakura-dark transition-colors block">Marino's Log</a>
                 <a href="gallery.html"
                     class="text-sakura-dark transition-colors border-b-2 border-sakura-dark pb-1 block">Gallery</a>
-                <a href="journal.html" class="hover:text-sakura-dark transition-colors block">Our Journal</a>
                 <a href="activities.html" class="hover:text-sakura-dark transition-colors block">Our Activities</a>
+                <a href="journal.html" class="hover:text-sakura-dark transition-colors block">Our Journal</a>
                 <a href="index.html#links" class="hover:text-sakura-dark transition-colors block">Official Links</a>
                 <a href="index.html#contact" class="hover:text-sakura-dark transition-colors block">Contact Us</a>
             </nav>
@@ -78,10 +78,8 @@
     </header>
 
     <main class="relative z-10 pt-32 pb-24 flex-grow">
-        <!-- Gallery Section -->
-        <section id="gallery-full" class="px-4 max-w-6xl mx-auto fade-up transition-all duration-1000">
+        <section class="px-4 max-w-6xl mx-auto fade-up transition-all duration-1000">
             <div class="text-center mb-16">
-                <!-- Return Link -->
                 <a href="index.html"
                     class="inline-flex items-center text-xs font-bold text-gray-400 hover:text-sakura-dark transition-colors mb-8 uppercase tracking-[0.2em]">
                     &larr; Back to Home
@@ -89,13 +87,87 @@
                 <h2 class="text-3xl md:text-4xl font-bold text-soft-brown tracking-[0.3em] uppercase">
                     Gallery
                 </h2>
-                <p class="text-sm text-gray-500 mt-4 tracking-widest uppercase">Music Videos & Discography</p>
+                <p class="text-sm text-gray-500 mt-4 tracking-widest">幸阪茉里乃さんの参加楽曲・出演映像をまとめています</p>
             </div>
 
-            <!-- Grid Container for Full Gallery -->
-            <div id="gallery-full-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Injected by JS -->
+            <!-- コントロールバー: 並び替え（全体共通） -->
+            <div
+                class="flex flex-col sm:flex-row items-center justify-between sm:justify-end mb-12 gap-4 bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-gray-100 shadow-sm relative z-20">
+                <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-soft-brown tracking-wider">並び順:</span>
+                    <button onclick="sortGallery('desc')" id="sort-new"
+                        class="gallery-sort-btn px-4 py-2 text-xs font-bold rounded-full border-2 border-sakura-dark bg-sakura-dark text-white transition-all hover:shadow-md">
+                        新しい順
+                    </button>
+                    <button onclick="sortGallery('asc')" id="sort-old"
+                        class="gallery-sort-btn px-4 py-2 text-xs font-bold rounded-full border-2 border-sakura-dark text-sakura-dark bg-white transition-all hover:shadow-md">
+                        古い順
+                    </button>
+                </div>
             </div>
+
+            <!-- ==================== MV 大セクション ==================== -->
+            <div class="mb-24">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-1.5 h-8 bg-sakura-dark rounded-full"></div>
+                    <h3 class="text-2xl font-bold text-soft-brown tracking-[0.15em]">
+                        MV
+                    </h3>
+                </div>
+                <p class="text-xs text-gray-400 mb-8 ml-5">Music Videos</p>
+
+                <!-- コントロールバー: 絞り込み（MV専用） -->
+                <div class="flex flex-wrap items-center gap-2 mb-8">
+                    <button onclick="filterMV('all')" id="filter-all"
+                        class="gallery-filter-btn px-4 py-2 text-xs font-bold rounded-full border-2 border-soft-brown bg-soft-brown text-white transition-all hover:shadow-md">
+                        All
+                    </button>
+                    <button onclick="filterMV('single')" id="filter-single"
+                        class="gallery-filter-btn px-4 py-2 text-xs font-bold rounded-full border-2 border-soft-brown text-soft-brown bg-white transition-all hover:shadow-md">
+                        Single MV
+                    </button>
+                    <button onclick="filterMV('album')" id="filter-album"
+                        class="gallery-filter-btn px-4 py-2 text-xs font-bold rounded-full border-2 border-soft-brown text-soft-brown bg-white transition-all hover:shadow-md">
+                        Album MV
+                    </button>
+                </div>
+
+                <!-- MV動画グリッド -->
+                <div id="gallery-mv-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+
+            <!-- ==================== Live Movies 大セクション ==================== -->
+            <div class="mb-24">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-1.5 h-8 bg-blue-300 rounded-full"></div>
+                    <h3 class="text-2xl font-bold text-soft-brown tracking-[0.15em]">
+                        Live Movies
+                    </h3>
+                </div>
+                <p class="text-xs text-gray-400 mb-8 ml-5">Live Performances</p>
+
+                <div id="gallery-live-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+
+            <!-- ==================== その他出演動画 大セクション ==================== -->
+            <div class="mb-8">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-1.5 h-8 bg-pearl-dark rounded-full"></div>
+                    <h3 class="text-2xl font-bold text-soft-brown tracking-[0.15em]">
+                        Others
+                    </h3>
+                </div>
+                <p class="text-xs text-gray-400 mb-8 ml-5">Other Appearances</p>
+
+                <div id="gallery-others-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+
         </section>
     </main>
 

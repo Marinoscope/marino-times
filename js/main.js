@@ -95,7 +95,7 @@ function initScrollObserver() {
    microCMS 設定
    ========================================= */
 const MICROCMS_API_KEY = 'hHa79ATpW9X7o6WxiZhw7AVquSgs1Niw0uYi';  // TODO: ここにmicroCMSのAPIキーを入力してください
-const MICROCMS_ENDPOINT = 'https://marino-times.microcms.io/apis/journal';  // TODO: ここにエンドポイントURLを入力してください
+const MICROCMS_ENDPOINT = 'https://marino-times.microcms.io/api/v1/journal';  // TODO: ここにエンドポイントURLを入力してください
 
 /* =========================================
    Our Journal (News/Blog) Data & Rendering

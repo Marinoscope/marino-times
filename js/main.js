@@ -488,6 +488,10 @@ const SHEET_SCHEDULE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1
 // 取得した全スケジュールデータを保持する配列
 let allScheduleData = [];
 
+// スケジュールの状態管理
+let currentScheduleCategory = 'all';
+let showPastSchedules = false;
+
 // フォールバック用データ（CSV取得失敗時）
 const fallbackScheduleData = [
     { date: "2026.12.19", time: "", category: "Birthday", title: "幸阪茉里乃 生誕祭 2026", link: "" },
@@ -500,19 +504,20 @@ const SCHEDULE_CATEGORY_COLORS = {
     'Birthday': 'bg-sakura-pink text-sakura-dark',
     'Meet & Greet': 'bg-pearl-green text-teal-600',
     'Media': 'bg-blue-100 text-blue-600',
-    'TV / Radio': 'bg-amber-100 text-amber-600',
     'Live / Event': 'bg-purple-100 text-purple-600',
+    'Release': 'bg-indigo-100 text-indigo-600',
     'default': 'bg-gray-100 text-gray-600'
 };
 
 // スケジュールHTMLの1行分を生成
 function createScheduleItemHTML(item) {
     const colorClass = SCHEDULE_CATEGORY_COLORS[item.category] || SCHEDULE_CATEGORY_COLORS['default'];
-    const timeDisplay = item.time ? `<span class="text-xs text-gray-500 font-mono ml-2 block md:inline">${item.time}</span>` : '';
+    // 時間のフォントも日付と同じ font-mono に統一
+    const timeDisplay = item.time ? `<span class="text-xs text-gray-400 font-mono ml-2 block md:inline">${item.time}</span>` : '';
 
     // リンクの有無でタグを出し分け
     const content = `
-        <span class="text-sm text-gray-400 font-mono w-32 shrink-0">${item.date}${timeDisplay}</span>
+        <span class="text-sm text-gray-400 font-mono w-32 shrink-0">${item.formattedDate || item.date}${timeDisplay}</span>
         <span class="${colorClass} text-xs px-2 py-1 rounded w-fit h-fit shrink-0 tracking-wider">${item.category}</span>
         <p class="text-sm md:text-base font-medium flex-grow group-hover:text-sakura-dark transition-colors">${item.title}</p>
     `;
@@ -558,8 +563,18 @@ async function initSchedule() {
         for (let i = 1; i < rows.length; i++) {
             const cols = parseCSVRow(rows[i]);
             if (cols.length >= 4) { // 最低4列(date, time, category, title)
+                const dateStr = cols[0] || '';
+                // JSTの現在日時と比較するためのDateオブジェクトを作成 (2026.03.15 -> 2026-03-15T23:59:59+09:00のように丸1日は残す)
+                let dateObj = null;
+                if (dateStr.match(/^\d{4}\.\d{2}\.\d{2}$/)) {
+                    const [y, m, d] = dateStr.split('.');
+                    // その日の23:59:59を基準にする（当日中は「未来/現在」として表示するため）
+                    dateObj = new Date(`${y}-${m}-${d}T23:59:59+09:00`);
+                }
+
                 parsedData.push({
-                    date: cols[0] || '',
+                    dateTimestamp: dateObj ? dateObj.getTime() : 0, // ソート・フィルタリング用
+                    formattedDate: dateStr, // 表示用
                     time: cols[1] || '',
                     category: cols[2] || 'Other',
                     title: cols[3] || '',
@@ -568,23 +583,169 @@ async function initSchedule() {
             }
         }
 
-        // 日付の降順（新しい順）にソート
-        allScheduleData = parsedData.length > 0 ? parsedData.sort((a, b) => b.date.localeCompare(a.date)) : fallbackScheduleData;
+        allScheduleData = parsedData.length > 0 ? parsedData : fallbackScheduleData.map(item => ({ ...item, formattedDate: item.date, dateTimestamp: new Date(item.date.replace(/\./g, '-') + 'T23:59:59+09:00').getTime() }));
     } catch (error) {
         console.warn("Could not load schedule from Google Sheets, using fallback.", error);
-        allScheduleData = fallbackScheduleData;
+        allScheduleData = fallbackScheduleData.map(item => ({ ...item, formattedDate: item.date, dateTimestamp: new Date(item.date.replace(/\./g, '-') + 'T23:59:59+09:00').getTime() }));
     }
 
-    // プレビュー（トップページ、直近5件）
+    // JSTの現在時刻を取得
+    const nowJST = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
+    const nowTimestamp = new Date(nowJST).getTime();
+
+    // 未来の予定（今日含む）と過去の予定に分ける
+    const futureSchedules = allScheduleData.filter(item => item.dateTimestamp >= nowTimestamp);
+    // 過去の予定は降順（新しい順）にしておく
+    const pastSchedules = allScheduleData.filter(item => item.dateTimestamp < nowTimestamp).sort((a, b) => b.dateTimestamp - a.dateTimestamp);
+
+    // プレビュー（トップページ）：未来の予定の直近5件（日付が近い順＝昇順）
     if (previewContainer) {
-        const previewData = allScheduleData.slice(0, 5);
-        previewContainer.innerHTML = previewData.map(item => createScheduleItemHTML(item)).join('');
+        // 未来の予定を昇順（近い日が上）にソート
+        const previewData = [...futureSchedules].sort((a, b) => a.dateTimestamp - b.dateTimestamp).slice(0, 5);
+
+        if (previewData.length > 0) {
+            previewContainer.innerHTML = previewData.map(item => createScheduleItemHTML(item)).join('');
+        } else {
+            previewContainer.innerHTML = '<p class="text-sm text-gray-400 text-center py-8">現在、予定されているスケジュールはありません。</p>';
+        }
     }
 
     // 全件表示（schedule.html）
     if (fullContainer) {
-        fullContainer.innerHTML = allScheduleData.map(item => createScheduleItemHTML(item)).join('');
+        renderScheduleFullList();
+        setupScheduleFilters();
+        setupPastScheduleToggle();
     }
+}
+
+// schedule.htmlのリスト描画
+function renderScheduleFullList() {
+    const listContainer = document.getElementById('schedule-full-list');
+    if (!listContainer) return;
+
+    // JSTの現在時刻を取得
+    const nowJST = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
+    const nowTimestamp = new Date(nowJST).getTime();
+
+    // 未来と過去に分ける
+    const futureSchedules = allScheduleData.filter(item => item.dateTimestamp >= nowTimestamp).sort((a, b) => a.dateTimestamp - b.dateTimestamp);
+    const pastSchedules = allScheduleData.filter(item => item.dateTimestamp < nowTimestamp).sort((a, b) => b.dateTimestamp - a.dateTimestamp);
+
+    // カテゴリで絞り込み
+    const filterFn = item => currentScheduleCategory === 'all' || item.category === currentScheduleCategory;
+
+    let displayHtml = '';
+
+    // 未来スケジュールの表示
+    const filteredFuture = futureSchedules.filter(filterFn);
+    if (filteredFuture.length > 0) {
+        displayHtml += filteredFuture.map(item => createScheduleItemHTML(item)).join('');
+    } else if (!showPastSchedules) {
+        displayHtml += '<p class="text-sm text-gray-400 text-center py-8">現在、予定されているスケジュールはありません。</p>';
+    }
+
+    // 過去スケジュールの表示
+    if (showPastSchedules) {
+        const filteredPast = pastSchedules.filter(filterFn);
+        if (filteredPast.length > 0) {
+            // 区切り線を追加
+            if (filteredFuture.length > 0) {
+                displayHtml += `
+                    <li class="py-6 flex items-center justify-center">
+                        <div class="h-px bg-gray-200 flex-grow"></div>
+                        <span class="px-4 text-xs font-bold text-gray-400 tracking-widest uppercase">Past Schedules</span>
+                        <div class="h-px bg-gray-200 flex-grow"></div>
+                    </li>
+                `;
+            } else {
+                displayHtml += '<p class="text-sm text-gray-400 font-bold tracking-widest uppercase mb-4 mt-2">Past Schedules</p>';
+            }
+            displayHtml += filteredPast.map(item => createScheduleItemHTML(item)).join('');
+        }
+    }
+
+    listContainer.innerHTML = displayHtml;
+}
+
+// schedule.htmlのフィルタリングボタンの設定
+function setupScheduleFilters() {
+    const filterBar = document.getElementById('schedule-filter-bar');
+    if (!filterBar) return;
+
+    // 全データからユニークなカテゴリを抽出
+    const categories = new Set();
+    allScheduleData.forEach(item => {
+        if (item.category) categories.add(item.category);
+    });
+
+    // カテゴリをソートして配列化
+    const categoriesArray = Array.from(categories).sort();
+
+    // フィルタボタンの生成
+    const baseBtnClasses = "px-5 py-2 rounded-full text-xs font-bold tracking-wider transition-all duration-300 border flex-shrink-0";
+    const activeBtnClasses = "bg-soft-brown text-white border-soft-brown shadow-md";
+    const inactiveBtnClasses = "bg-white text-gray-500 border-gray-200 hover:border-sakura-pink hover:text-sakura-dark";
+
+    let html = `
+        <button class="filter-btn-schedule ${baseBtnClasses} ${currentScheduleCategory === 'all' ? activeBtnClasses : inactiveBtnClasses}" data-category="all">
+            すべて
+        </button>
+    `;
+
+    categoriesArray.forEach(cat => {
+        const isActive = currentScheduleCategory === cat;
+        html += `
+            <button class="filter-btn-schedule ${baseBtnClasses} ${isActive ? activeBtnClasses : inactiveBtnClasses}" data-category="${cat}">
+                ${cat}
+            </button>
+        `;
+    });
+
+    filterBar.innerHTML = html;
+
+    // クリックイベントの追加
+    const buttons = filterBar.querySelectorAll('.filter-btn-schedule');
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentScheduleCategory = btn.getAttribute('data-category');
+            // ボタンの見た目更新
+            buttons.forEach(b => {
+                b.className = `filter-btn-schedule ${baseBtnClasses} ${b.getAttribute('data-category') === currentScheduleCategory ? activeBtnClasses : inactiveBtnClasses}`;
+            });
+            // リストの再描画
+            renderScheduleFullList();
+        });
+    });
+}
+
+// 過去のスケジュール表示切り替えボタンの設定
+function setupPastScheduleToggle() {
+    const toggleBtn = document.getElementById('toggle-past-schedule-btn');
+    if (!toggleBtn) return;
+
+    const indicator = document.getElementById('past-schedule-indicator');
+    const textNode = document.getElementById('past-schedule-text');
+
+    toggleBtn.addEventListener('click', () => {
+        showPastSchedules = !showPastSchedules;
+
+        // UI更新
+        if (showPastSchedules) {
+            indicator.classList.remove('bg-gray-300');
+            indicator.classList.add('bg-sakura-dark');
+            toggleBtn.classList.remove('border-gray-200', 'text-gray-400');
+            toggleBtn.classList.add('border-sakura-pink', 'text-soft-brown');
+            if (textNode) textNode.textContent = "過去の予定を隠す";
+        } else {
+            indicator.classList.add('bg-gray-300');
+            indicator.classList.remove('bg-sakura-dark');
+            toggleBtn.classList.add('border-gray-200', 'text-gray-400');
+            toggleBtn.classList.remove('border-sakura-pink', 'text-soft-brown');
+            if (textNode) textNode.textContent = "過去の予定を表示";
+        }
+
+        renderScheduleFullList();
+    });
 }
 
 /* =========================================

@@ -491,6 +491,8 @@ let allScheduleData = [];
 // スケジュールの状態管理
 let currentScheduleCategory = 'all';
 let showPastSchedules = false;
+let currentScheduleView = 'list'; // 'list' or 'calendar'
+let currentCalendarDate = new Date(); // カレンダー表示用の基準月
 
 // フォールバック用データ（CSV取得失敗時）
 const fallbackScheduleData = [
@@ -612,10 +614,155 @@ async function initSchedule() {
 
     // 全件表示（schedule.html）
     if (fullContainer) {
+        setupScheduleViewToggle();
         renderScheduleFullList();
+        renderScheduleCalendar();
         setupScheduleFilters();
         setupPastScheduleToggle();
     }
+}
+
+// リスト・カレンダーの表示切替設定
+function setupScheduleViewToggle() {
+    const listBtn = document.getElementById('view-list-btn');
+    const calBtn = document.getElementById('view-calendar-btn');
+    const listContainer = document.getElementById('schedule-full-list');
+    const calContainer = document.getElementById('schedule-calendar-view');
+    const pastToggleBtnContainers = document.querySelectorAll('#toggle-past-schedule-btn');
+
+    if (!listBtn || !calBtn || !listContainer || !calContainer) return;
+
+    function updateView() {
+        if (currentScheduleView === 'list') {
+            listBtn.className = "px-6 py-2 rounded-full text-xs font-bold transition-all bg-soft-brown text-white shadow-sm";
+            calBtn.className = "px-6 py-2 rounded-full text-xs font-bold transition-all text-gray-500 hover:text-soft-brown hover:bg-gray-50";
+            listContainer.classList.remove('hidden');
+            calContainer.classList.add('hidden');
+            if (pastToggleBtnContainers[0] && pastToggleBtnContainers[0].parentElement) {
+                pastToggleBtnContainers[0].parentElement.classList.remove('hidden');
+            }
+            renderScheduleFullList();
+        } else {
+            calBtn.className = "px-6 py-2 rounded-full text-xs font-bold transition-all bg-soft-brown text-white shadow-sm";
+            listBtn.className = "px-6 py-2 rounded-full text-xs font-bold transition-all text-gray-500 hover:text-soft-brown hover:bg-gray-50";
+            calContainer.classList.remove('hidden');
+            listContainer.classList.add('hidden');
+            if (pastToggleBtnContainers[0] && pastToggleBtnContainers[0].parentElement) {
+                pastToggleBtnContainers[0].parentElement.classList.add('hidden');
+            }
+            renderScheduleCalendar();
+        }
+    }
+
+    listBtn.addEventListener('click', () => { currentScheduleView = 'list'; updateView(); });
+    calBtn.addEventListener('click', () => { currentScheduleView = 'calendar'; updateView(); });
+}
+
+// カレンダー形式の描画
+function renderScheduleCalendar() {
+    const calContainer = document.getElementById('schedule-calendar-view');
+    if (!calContainer) return;
+
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+
+    // 当月のカレンダーデータ作成
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDayOfWeek = firstDay.getDay(); // 0(Sun) - 6(Sat)
+    const daysInMonth = lastDay.getDate();
+
+    // 予定のフィルタリング（カテゴリのみ適用。過去・未来の絞り込みはしない）
+    const filterFn = item => currentScheduleCategory === 'all' || item.category === currentScheduleCategory;
+    const filteredSchedules = allScheduleData.filter(filterFn);
+
+    let html = `
+        <div class="flex justify-between items-center mb-6 px-2 md:px-8">
+            <button id="prev-month-btn" class="p-2 text-gray-400 hover:text-sakura-dark transition-colors bg-gray-50 rounded-full hover:bg-sakura-pink/50">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <h3 class="text-xl md:text-2xl font-bold text-soft-brown tracking-widest flex items-baseline gap-2">
+                ${year}年 <span class="text-3xl md:text-4xl text-sakura-dark">${month + 1}</span>月
+            </h3>
+            <button id="next-month-btn" class="p-2 text-gray-400 hover:text-sakura-dark transition-colors bg-gray-50 rounded-full hover:bg-sakura-pink/50">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+        <div class="grid grid-cols-7 gap-1 md:gap-2 bg-gray-50 p-2 md:p-4 rounded-2xl border border-gray-100">
+            <!-- 曜日ヘッダー -->
+            ${['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((d, i) => `
+                <div class="text-center py-2 text-[10px] md:text-xs font-bold tracking-widest ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-gray-400'}">${d}</div>
+            `).join('')}
+    `;
+
+    // 余白セルの描画
+    for (let i = 0; i < startDayOfWeek; i++) {
+        html += `<div class="bg-white/50 rounded-lg p-1 md:p-2 min-h-[80px] md:min-h-[120px]"></div>`;
+    }
+
+    // 日付セルの描画
+    const today = new Date();
+    const isThisMonth = today.getFullYear() === year && today.getMonth() === month;
+
+    for (let date = 1; date <= daysInMonth; date++) {
+        // 例: '2026.03.15' の形式にフォーマット
+        const cellDateStr = `${year}.${String(month + 1).padStart(2, '0')}.${String(date).padStart(2, '0')}`;
+
+        // この日の予定を取得
+        const daySchedules = filteredSchedules.filter(item => item.formattedDate === cellDateStr);
+
+        const isToday = isThisMonth && today.getDate() === date;
+        const dateClasses = isToday
+            ? "flex items-center justify-center w-6 h-6 rounded-full bg-sakura-dark text-white font-bold mx-auto"
+            : "text-gray-500 font-bold block text-center";
+
+        html += `
+            <div class="bg-white rounded-lg p-1 md:p-2 border border-gray-100 min-h-[80px] md:min-h-[120px] overflow-hidden flex flex-col hover:border-sakura-pink transition-colors">
+                <div class="text-xs mb-1 md:mb-2 w-full"><span class="${dateClasses}">${date}</span></div>
+                <div class="flex flex-col gap-1 overflow-y-auto hide-scrollbar flex-grow">
+        `;
+
+        // 予定の描画
+        daySchedules.forEach(item => {
+            const colorClass = SCHEDULE_CATEGORY_COLORS[item.category] || SCHEDULE_CATEGORY_COLORS['default'];
+            const linkTagStart = item.link ? `<a href="${item.link}" target="_blank" class="block hover:opacity-80 transition-opacity">` : `<div class="block">`;
+            const linkTagEnd = item.link ? `</a>` : `</div>`;
+            const timeStr = item.time ? `<span class="mr-1 opacity-80 font-mono shrink-0 whitespace-nowrap">${item.time}</span>` : '';
+
+            html += `
+                ${linkTagStart}
+                <div class="${colorClass} text-[9px] md:text-[10px] p-1 md:px-[6px] md:py-1 rounded shadow-sm leading-tight break-all border border-black/5 flex flex-col xl:flex-row xl:items-start gap-0.5">
+                    ${timeStr}<span class="line-clamp-2 md:line-clamp-none">${item.title}</span>
+                </div>
+                ${linkTagEnd}
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+    }
+
+    // 最後の余白セルを描画
+    const totalCells = startDayOfWeek + daysInMonth;
+    const remainingCells = (7 - (totalCells % 7)) % 7;
+    for (let i = 0; i < remainingCells; i++) {
+        html += `<div class="bg-white/50 rounded-lg p-1 md:p-2 min-h-[80px] md:min-h-[120px]"></div>`;
+    }
+
+    html += `</div>`;
+    calContainer.innerHTML = html;
+
+    // 前月・次月ボタンのイベント
+    document.getElementById('prev-month-btn').addEventListener('click', () => {
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+        renderScheduleCalendar();
+    });
+    document.getElementById('next-month-btn').addEventListener('click', () => {
+        currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+        renderScheduleCalendar();
+    });
 }
 
 // schedule.htmlのリスト描画
@@ -712,8 +859,9 @@ function setupScheduleFilters() {
             buttons.forEach(b => {
                 b.className = `filter-btn-schedule ${baseBtnClasses} ${b.getAttribute('data-category') === currentScheduleCategory ? activeBtnClasses : inactiveBtnClasses}`;
             });
-            // リストの再描画
+            // リストとカレンダーの再描画
             renderScheduleFullList();
+            renderScheduleCalendar();
         });
     });
 }

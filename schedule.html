@@ -75,7 +75,7 @@
     <!-- Main Content -->
     <main class="relative z-10 pt-32 pb-24 flex-grow">
         <section class="px-4 max-w-4xl mx-auto fade-up transition-all duration-1000">
-            <div class="text-center mb-16">
+            <div class="text-center mb-12">
                 <a href="index.html"
                     class="inline-flex items-center text-xs font-bold text-gray-400 hover:text-sakura-dark transition-colors mb-8 uppercase tracking-[0.2em]">
                     &larr; Back to Home
@@ -83,7 +83,22 @@
                 <h2 class="text-3xl md:text-4xl font-bold text-soft-brown tracking-[0.3em] uppercase">
                     Schedule
                 </h2>
-                <p class="text-sm text-gray-500 mt-4 tracking-widest uppercase">出演情報・スケジュール</p>
+                <div class="mt-6 text-left md:text-center px-4 md:px-0 max-w-2xl mx-auto">
+                    <p class="text-sm text-soft-brown font-bold mb-2">幸阪茉里乃さんのスケジュールをまとめています。</p>
+                    <p class="text-[11px] md:text-xs text-red-400 leading-relaxed">
+                        ※まりのたいむず編集部による手動入力のため、抜けている予定がある場合がございます。<br class="hidden md:block">あらかじめご了承ください。
+                    </p>
+                </div>
+            </div>
+
+            <!-- View Toggle (List / Calendar) -->
+            <div class="flex justify-center mb-8">
+                <div class="bg-white p-1 rounded-full flex gap-1 shadow-sm border border-gray-100">
+                    <button id="view-list-btn"
+                        class="px-6 py-2 rounded-full text-xs font-bold transition-all bg-soft-brown text-white shadow-sm">リスト</button>
+                    <button id="view-calendar-btn"
+                        class="px-6 py-2 rounded-full text-xs font-bold transition-all text-gray-500 hover:text-soft-brown hover:bg-gray-50">カレンダー</button>
+                </div>
             </div>
 
             <!-- Filter Categories -->
@@ -109,6 +124,11 @@
                     <!-- Schedule items will be injected here by JS -->
                     <p class="text-sm text-gray-400 text-center py-16">読み込み中...</p>
                 </ul>
+
+                <!-- Calendar View Container -->
+                <div id="schedule-calendar-view" class="hidden mt-12 md:mt-4">
+                    <!-- Calendar controls and grid will be injected here by JS -->
+                </div>
             </div>
         </section>
     </main>

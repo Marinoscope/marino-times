@@ -397,18 +397,50 @@ async function initArticle() {
 /* =========================================
    History Data Rendering
    ========================================= */
-const historyData = [
+const SHEET_HISTORY_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTF_mZSMjo9gB3lHeruGf2jpVfKxMcnVA3TrVNo8Z3RZOJA7cQG9Ilfq5cH8YCSdp31SD5REAM342_d/pub?gid=438507730&single=true&output=csv';
+
+const fallbackHistoryData = [
     { date: "2002.12.19", title: "三重県にて誕生", description: "" },
     { date: "2018.08.20", title: "坂道合同新規メンバー募集オーディション 合格", description: "高校1年生の夏、「坂道合同新規メンバー募集オーディション」に合格。" },
-    { date: "2020.02.16", title: "欅坂46への配属発表", description: "SHOWROOM配信にて、坂道研修生から欅坂46（櫻坂46の前身）の新2期生として配属されることが発表される。" },
-    { date: "2022.09.18", title: "『そこ曲がったら、櫻坂？』にて「幸阪茉里乃DEATHゲーム」放送", description: "冠番組の企画にて、ドSキャラである「マリノ様」が初登場。MCやメンバーへの鋭いツッコミと独特のワードセンスを発揮し、バラエティにおける新たな一面を見せる。" },
-    { date: "2023.11.26", title: "『そこ曲がったら、櫻坂？』にて「帰ってきた！幸阪茉里乃DEATHゲームシーズン2」放送", description: "好評につき第2弾が放送。番組内に欠かせないキャラクターとしての立ち位置を確立する。" },
-    { date: "2023.12.07", title: "『秘密のケンミンSHOW極』初出演", description: "三重県代表として「みそ焼きうどん」を紹介。" },
-    { date: "2024.06.06", title: "『サクラミーツ』ゲスト出演", description: "テレビ朝日系番組『サクラミーツ』にゲスト出演。サルゴリラとのコントに挑戦し、堂々とした演技を披露する。" },
-    { date: "2025.07.03", title: "『秘密のケンミンSHOW極 夏の2時間SP』出演", description: "2度目の出演を果たす。" },
-    { date: "2025.09.11", title: "『サクラミーツフェス』ゲスト出演", description: "EX THEATER ROPPONGIで開催されたリアルイベントにゲスト出演。" },
-    { date: "2025.11.20", title: "『秘密のケンミンSHOW極』出演", description: "3度目の出演を果たす。" },
+    { date: "2020.02.16", title: "欅坂46への配属発表", description: "SHOWROOM配信にて、坂道研修生から欅坂46（櫻坂46の前身）の新2期生として配属されることが発表される。" }
 ];
+
+let historyData = [];
+
+// スプレッドシートから History (Log) データを取得
+async function fetchHistoryData() {
+    try {
+        let fetchUrl = SHEET_HISTORY_CSV_URL;
+        if (window.location.protocol === 'file:') {
+            fetchUrl = 'https://corsproxy.io/?' + encodeURIComponent(SHEET_HISTORY_CSV_URL);
+        }
+
+        const response = await fetch(fetchUrl, { redirect: 'follow' });
+        if (!response.ok) throw new Error("Failed to fetch History CSV data.");
+
+        const text = await response.text();
+        if (text.trim().startsWith('<')) throw new Error("Received HTML instead of CSV.");
+
+        const rows = text.split('\n').filter(row => row.trim() !== '');
+        const parsedData = [];
+
+        for (let i = 1; i < rows.length; i++) { // ヘッダーをスキップ
+            const cols = parseCSVRow(rows[i]);
+            if (cols.length >= 2) { // 必須(date, title)
+                parsedData.push({
+                    date: cols[0] || '',
+                    title: cols[1] || '',
+                    description: cols[2] || ''
+                });
+            }
+        }
+
+        historyData = parsedData.length > 0 ? parsedData : fallbackHistoryData;
+    } catch (error) {
+        console.warn("Could not load history from Google Sheets, using fallback.", error);
+        historyData = fallbackHistoryData;
+    }
+}
 
 // 共通のHistory要素生成処理
 function createHistoryItemHTML(item) {
@@ -423,22 +455,27 @@ function createHistoryItemHTML(item) {
 }
 
 // トップページ用のプレビュー表示（最古の3件）
-function renderHistoryPreview() {
+async function renderHistoryPreview() {
     const listContainer = document.getElementById('history-list-preview');
     if (!listContainer) return;
 
+    // データが空なら取得
+    if (historyData.length === 0) await fetchHistoryData();
+
     // 最古の3件のみ表示
     const previewData = historyData.slice(0, 3);
-    const html = previewData.map((item, index) => createHistoryItemHTML(item, index)).join('');
+    const html = previewData.map(item => createHistoryItemHTML(item)).join('');
     listContainer.innerHTML = html;
 
-    // アニメーションの再初期化
     initScrollObserver();
 }
+
 // 全件表示（古い順・時系列）
-function renderHistoryFull() {
+async function renderHistoryFull() {
     const listContainer = document.getElementById('history-list-full');
     if (!listContainer) return;
+
+    if (historyData.length === 0) await fetchHistoryData();
 
     const html = historyData.map(item => createHistoryItemHTML(item)).join('');
     listContainer.innerHTML = html;
@@ -447,16 +484,49 @@ function renderHistoryFull() {
 /* =========================================
    Our Activities Data Rendering
    ========================================= */
-const activitiesData = [
+const SHEET_ACTIVITIES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTF_mZSMjo9gB3lHeruGf2jpVfKxMcnVA3TrVNo8Z3RZOJA7cQG9Ilfq5cH8YCSdp31SD5REAM342_d/pub?gid=2139893562&single=true&output=csv';
+
+const fallbackActivitiesData = [
     { date: "2024.07.07", title: "応援団体「まりのたいむず」結成", description: "幸阪茉里乃さんに関する情報を発信するアカウントとして「まりのたいむず」を発足。<br>X（旧Twitter）を中心に活動を開始。<br>活動コンセプトは「幸阪茉里乃さんを全力応援！」" },
-    { date: "2024.08.27", title: "#marinotalk 購読キャンペーン", description: "#marinotalk 購読キャンペーンを実施。" },
-    { date: "2024.10.07", title: "生誕広告企画 支援者募集", description: "幸阪茉里乃生誕祭2024生誕広告企画の支援者を募集開始。" },
-    { date: "2024.12.16", title: "幸阪茉里乃生誕祭2024生誕駅広告", description: "皆様からの支援を受け、六本木駅に駅広告を掲出いたしました！<br>イラストはすーる様にご依頼しました！<br>※「MARINO301」様と共催。" },
-    { date: "2024.12.16", title: "「幸阪茉里乃トレンドワード大賞2024」実施", description: "#幸阪茉里乃生誕祭2024 & 年末企画として、彼女の一年を彩るトレンドワードを大募集！<br>後日ランキング形式で発表しました！" },
-    { date: "2025.10.14", title: "生誕広告企画 支援者募集", description: "幸阪茉里乃生誕祭2025生誕広告企画の支援者を募集開始。" },
-    { date: "2025.12.17", title: "幸阪茉里乃生誕祭2025生誕駅広告", description: "皆様からの支援を受け、市ヶ谷駅に駅広告を掲出いたしました！<br>イラストはすーる様、温守♨️様、もちゃ様にご依頼しました！" },
-    { date: "2026.03.XX", title: "公式サイト設立", description: "本ウェブサイトの設立。<br>より多彩な応援ができるよう、「まりのたいむず公式サイト」兼「幸阪茉里乃さん非公式ファンサイト」として、本ウェブサイトを設立しました！" }
+    { date: "2024.08.27", title: "#marinotalk 購読キャンペーン", description: "#marinotalk 購読キャンペーンを実施。" }
 ];
+
+let activitiesData = [];
+
+// スプレッドシートから Activities データを取得
+async function fetchActivitiesData() {
+    try {
+        let fetchUrl = SHEET_ACTIVITIES_CSV_URL;
+        if (window.location.protocol === 'file:') {
+            fetchUrl = 'https://corsproxy.io/?' + encodeURIComponent(SHEET_ACTIVITIES_CSV_URL);
+        }
+
+        const response = await fetch(fetchUrl, { redirect: 'follow' });
+        if (!response.ok) throw new Error("Failed to fetch Activities CSV data.");
+
+        const text = await response.text();
+        if (text.trim().startsWith('<')) throw new Error("Received HTML instead of CSV.");
+
+        const rows = text.split('\n').filter(row => row.trim() !== '');
+        const parsedData = [];
+
+        for (let i = 1; i < rows.length; i++) { // ヘッダーをスキップ
+            const cols = parseCSVRow(rows[i]);
+            if (cols.length >= 2) { // 必須(date, title)
+                parsedData.push({
+                    date: cols[0] || '',
+                    title: cols[1] || '',
+                    description: cols[2] || ''
+                });
+            }
+        }
+
+        activitiesData = parsedData.length > 0 ? parsedData : fallbackActivitiesData;
+    } catch (error) {
+        console.warn("Could not load activities from Google Sheets, using fallback.", error);
+        activitiesData = fallbackActivitiesData;
+    }
+}
 
 function createActivityItemHTML(item) {
     return `
@@ -470,19 +540,25 @@ function createActivityItemHTML(item) {
 }
 
 // トップページプレビュー用（古い3件）
-function renderActivitiesPreview() {
+async function renderActivitiesPreview() {
     const listContainer = document.getElementById('activities-timeline-preview');
     if (!listContainer) return;
+
+    if (activitiesData.length === 0) await fetchActivitiesData();
 
     const previewData = activitiesData.slice(0, 3);
     const html = previewData.map(item => createActivityItemHTML(item)).join('');
     listContainer.innerHTML = html;
+
+    initScrollObserver();
 }
 
 // 全件表示用（Our Activities ページ）
-function renderActivitiesFull() {
+async function renderActivitiesFull() {
     const listContainer = document.getElementById('activities-timeline');
     if (!listContainer) return;
+
+    if (activitiesData.length === 0) await fetchActivitiesData();
 
     const html = activitiesData.map(item => createActivityItemHTML(item)).join('');
     listContainer.innerHTML = html;

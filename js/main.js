@@ -186,15 +186,25 @@ async function fetchJournalData(limit) {
         const data = await response.json();
 
         // microCMS のレスポンスを内部形式に変換
-        return data.contents.map(item => ({
-            id: item.id,
-            date: formatDate(item.publishedAt),
-            category: item.category || '',
-            title: item.title || '',
-            image: item.thumbnail ? item.thumbnail.url : 'https://placehold.jp/400x300.png?text=No+Image',
-            link: item.link || '#',
-            body: item.body || ''
-        }));
+        return data.contents.map(item => {
+            // categoryがセレクトフィールド(配列)の場合の対応
+            let categoryName = '';
+            if (Array.isArray(item.category) && item.category.length > 0) {
+                categoryName = item.category[0];
+            } else if (typeof item.category === 'string') {
+                categoryName = item.category;
+            }
+
+            return {
+                id: item.id,
+                date: formatDate(item.publishedAt),
+                category: categoryName,
+                title: item.title || '',
+                image: item.thumbnail ? item.thumbnail.url : 'https://placehold.jp/400x300.png?text=No+Image',
+                link: item.link || '#',
+                body: item.body || ''
+            };
+        });
     } catch (error) {
         console.warn('[Journal] microCMSからの取得に失敗しました。フォールバックデータを使用します。', error);
         return null;

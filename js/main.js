@@ -514,8 +514,8 @@ const SCHEDULE_CATEGORY_COLORS = {
 // スケジュールHTMLの1行分を生成
 function createScheduleItemHTML(item) {
     const colorClass = SCHEDULE_CATEGORY_COLORS[item.category] || SCHEDULE_CATEGORY_COLORS['default'];
-    // 時間のフォントも日付と同じ font-mono に統一
-    const timeDisplay = item.time ? `<span class="text-xs text-gray-400 font-mono ml-2 block md:inline">${item.time}</span>` : '';
+    // 時間のフォントも日付と同じ font-mono とサイズ（text-sm）に統一
+    const timeDisplay = item.time ? `<span class="text-sm text-gray-400 font-mono ml-2 block md:inline">${item.time}</span>` : '';
 
     // リンクの有無でタグを出し分け
     const content = `
@@ -570,8 +570,10 @@ async function initSchedule() {
                 let dateObj = null;
                 if (dateStr.match(/^\d{4}\.\d{2}\.\d{2}$/)) {
                     const [y, m, d] = dateStr.split('.');
-                    // その日の23:59:59を基準にする（当日中は「未来/現在」として表示するため）
-                    dateObj = new Date(`${y}-${m}-${d}T23:59:59+09:00`);
+                    // JST(UTC+9) の 23:59:59 は UTC の 14:59:59
+                    // ブラウザ間で ISO文字列のパースが怪しいケースがあるため、数値で直接 Date を生成して getTime() を取る
+                    const utcTimestamp = Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), 14, 59, 59);
+                    dateObj = new Date(utcTimestamp);
                 }
 
                 parsedData.push({
@@ -585,15 +587,26 @@ async function initSchedule() {
             }
         }
 
-        allScheduleData = parsedData.length > 0 ? parsedData : fallbackScheduleData.map(item => ({ ...item, formattedDate: item.date, dateTimestamp: new Date(item.date.replace(/\./g, '-') + 'T23:59:59+09:00').getTime() }));
+        const fallbackMapper = (item) => {
+            const [y, m, d] = item.date.split('.');
+            return {
+                ...item,
+                formattedDate: item.date,
+                dateTimestamp: Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), 14, 59, 59)
+            };
+        };
+        allScheduleData = parsedData.length > 0 ? parsedData : fallbackScheduleData.map(fallbackMapper);
     } catch (error) {
         console.warn("Could not load schedule from Google Sheets, using fallback.", error);
-        allScheduleData = fallbackScheduleData.map(item => ({ ...item, formattedDate: item.date, dateTimestamp: new Date(item.date.replace(/\./g, '-') + 'T23:59:59+09:00').getTime() }));
+        const fallbackMapper = (item) => {
+            const [y, m, d] = item.date.split('.');
+            return { ...item, formattedDate: item.date, dateTimestamp: Date.UTC(parseInt(y), parseInt(m) - 1, parseInt(d), 14, 59, 59) };
+        };
+        allScheduleData = fallbackScheduleData.map(fallbackMapper);
     }
 
-    // JSTの現在時刻を取得
-    const nowJST = new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" });
-    const nowTimestamp = new Date(nowJST).getTime();
+    // 現在時刻のタイムスタンプを取得（getTime() は世界中どこでも同じEpochミリ秒）
+    const nowTimestamp = new Date().getTime();
 
     // 未来の予定（今日含む）と過去の予定に分ける
     const futureSchedules = allScheduleData.filter(item => item.dateTimestamp >= nowTimestamp);

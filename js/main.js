@@ -228,11 +228,55 @@ async function initJournal() {
         previewContainer.innerHTML = items.map(item => createJournalCardHTML(item)).join('');
     }
 
-    // 全件表示（journal.html）
+    // 全件表示（journal.html）+ カテゴリフィルター
     if (fullContainer) {
         const data = await fetchJournalData();
-        const items = data || fallbackJournalData;
-        fullContainer.innerHTML = items.map(item => createJournalCardHTML(item)).join('');
+        const allItems = data || fallbackJournalData;
+
+        // カテゴリフィルターボタンを生成
+        const filterBar = document.getElementById('journal-filter-bar');
+        if (filterBar && allItems.length > 0) {
+            const categories = [...new Set(allItems.map(item => item.category).filter(Boolean))];
+
+            // 「すべて」ボタン＋各カテゴリボタン
+            const filterButtons = ['すべて', ...categories];
+            filterBar.innerHTML = filterButtons.map(cat => `
+                <button class="journal-filter-btn px-4 py-2 rounded-full text-xs font-bold tracking-wider transition-all duration-200 border
+                    ${cat === 'すべて'
+                    ? 'bg-soft-brown text-white border-soft-brown'
+                    : 'bg-white text-gray-500 border-gray-200 hover:border-sakura-dark hover:text-sakura-dark'
+                }"
+                    data-category="${cat}">
+                    ${cat}
+                </button>
+            `).join('');
+
+            // フィルターボタンのクリックイベント
+            filterBar.querySelectorAll('.journal-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const selected = btn.dataset.category;
+
+                    // ボタンのアクティブ状態を切り替え
+                    filterBar.querySelectorAll('.journal-filter-btn').forEach(b => {
+                        b.className = b.className
+                            .replace('bg-soft-brown text-white border-soft-brown', '')
+                            .replace('bg-white text-gray-500 border-gray-200', '')
+                            + (b.dataset.category === selected
+                                ? ' bg-soft-brown text-white border-soft-brown'
+                                : ' bg-white text-gray-500 border-gray-200');
+                    });
+
+                    // カードをフィルタリングして再描画
+                    const filtered = selected === 'すべて'
+                        ? allItems
+                        : allItems.filter(item => item.category === selected);
+                    fullContainer.innerHTML = filtered.map(item => createJournalCardHTML(item)).join('');
+                });
+            });
+        }
+
+        // 初期表示（全件）
+        fullContainer.innerHTML = allItems.map(item => createJournalCardHTML(item)).join('');
     }
 }
 
@@ -314,15 +358,15 @@ async function initArticle() {
                 ${article.body || '<p class="text-gray-400">本文はありません。</p>'}
             </div>
 
-            <div class="mt-16 pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div class="mt-16 pt-8 border-t border-gray-100 flex flex-col items-center gap-4">
                 ${(article.link && article.link !== '#') ? `
                 <a href="${article.link}" target="_blank"
                     class="inline-block bg-soft-brown text-white px-8 py-3 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-amber-800 transition-all duration-300 transform hover:-translate-y-1 text-sm">
-                    元の記事を見る &rarr;
+                    関連ページを開く
                 </a>` : ''}
                 <a href="journal.html"
                     class="inline-block bg-sakura-dark text-white px-8 py-3 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-pink-400 transition-all duration-300 transform hover:-translate-y-1 text-sm">
-                    &larr; 記事一覧に戻る
+                    記事一覧に戻る
                 </a>
             </div>
         `;

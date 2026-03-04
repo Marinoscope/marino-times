@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 記事詳細ページ（article.html）
     if (document.getElementById('article-content')) initArticle();
 
+    // Schedule - Google Sheets から同期
+    initSchedule();
+
     // Marino's Log (History)
     if (document.getElementById('history-list-preview')) renderHistoryPreview();
     if (document.getElementById('history-list-full')) renderHistoryFull();
@@ -473,6 +476,115 @@ function renderActivitiesFull() {
 
     const html = activitiesData.map(item => createActivityItemHTML(item)).join('');
     listContainer.innerHTML = html;
+}
+
+/* =========================================
+   Schedule Data Rendering
+   ========================================= */
+
+// スケジュール用 Google Sheets CSV URL
+const SHEET_SCHEDULE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTF_mZSMjo9gB3lHeruGf2jpVfKxMcnVA3TrVNo8Z3RZOJA7cQG9Ilfq5cH8YCSdp31SD5REAM342_d/pub?gid=309169578&single=true&output=csv';
+
+// 取得した全スケジュールデータを保持する配列
+let allScheduleData = [];
+
+// フォールバック用データ（CSV取得失敗時）
+const fallbackScheduleData = [
+    { date: "2026.12.19", time: "", category: "Birthday", title: "幸阪茉里乃 生誕祭 2026", link: "" },
+    { date: "2026.03.15", time: "", category: "Meet & Greet", title: "9th Single ミート＆グリート受付開始", link: "" },
+    { date: "2026.02.25", time: "22:00", category: "Media", title: "雑誌「blt graph.」掲載", link: "" }
+];
+
+// カテゴリ別カラー定義
+const SCHEDULE_CATEGORY_COLORS = {
+    'Birthday': 'bg-sakura-pink text-sakura-dark',
+    'Meet & Greet': 'bg-pearl-green text-teal-600',
+    'Media': 'bg-blue-100 text-blue-600',
+    'TV / Radio': 'bg-amber-100 text-amber-600',
+    'Live / Event': 'bg-purple-100 text-purple-600',
+    'default': 'bg-gray-100 text-gray-600'
+};
+
+// スケジュールHTMLの1行分を生成
+function createScheduleItemHTML(item) {
+    const colorClass = SCHEDULE_CATEGORY_COLORS[item.category] || SCHEDULE_CATEGORY_COLORS['default'];
+    const timeDisplay = item.time ? `<span class="text-xs text-gray-500 font-mono ml-2 block md:inline">${item.time}</span>` : '';
+
+    // リンクの有無でタグを出し分け
+    const content = `
+        <span class="text-sm text-gray-400 font-mono w-32 shrink-0">${item.date}${timeDisplay}</span>
+        <span class="${colorClass} text-xs px-2 py-1 rounded w-fit h-fit shrink-0 tracking-wider">${item.category}</span>
+        <p class="text-sm md:text-base font-medium flex-grow group-hover:text-sakura-dark transition-colors">${item.title}</p>
+    `;
+
+    if (item.link) {
+        return `
+            <li class="border-b border-gray-100 pb-4 last:border-0 last:pb-0 group">
+                <a href="${item.link}" target="_blank" class="flex flex-col md:flex-row gap-2 md:gap-6 items-start md:items-center">
+                    ${content}
+                    <span class="text-gray-300 group-hover:text-sakura-dark transition-colors">&rarr;</span>
+                </a>
+            </li>
+        `;
+    } else {
+        return `
+            <li class="flex flex-col md:flex-row gap-2 md:gap-6 items-start md:items-center border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                ${content}
+            </li>
+        `;
+    }
+}
+
+// スケジュール全体の初期化
+async function initSchedule() {
+    const previewContainer = document.getElementById('schedule-preview-list');
+    const fullContainer = document.getElementById('schedule-full-list');
+
+    try {
+        let fetchUrl = SHEET_SCHEDULE_CSV_URL;
+        if (window.location.protocol === 'file:') {
+            fetchUrl = 'https://corsproxy.io/?' + encodeURIComponent(SHEET_SCHEDULE_CSV_URL);
+        }
+
+        const response = await fetch(fetchUrl, { redirect: 'follow' });
+        if (!response.ok) throw new Error("Failed to fetch Schedule CSV data.");
+
+        const text = await response.text();
+        if (text.trim().startsWith('<')) throw new Error("Received HTML instead of CSV.");
+
+        const rows = text.split('\n').filter(row => row.trim() !== '');
+        const parsedData = [];
+
+        for (let i = 1; i < rows.length; i++) {
+            const cols = parseCSVRow(rows[i]);
+            if (cols.length >= 4) { // 最低4列(date, time, category, title)
+                parsedData.push({
+                    date: cols[0] || '',
+                    time: cols[1] || '',
+                    category: cols[2] || 'Other',
+                    title: cols[3] || '',
+                    link: cols[4] || ''
+                });
+            }
+        }
+
+        // 日付の降順（新しい順）にソート
+        allScheduleData = parsedData.length > 0 ? parsedData.sort((a, b) => b.date.localeCompare(a.date)) : fallbackScheduleData;
+    } catch (error) {
+        console.warn("Could not load schedule from Google Sheets, using fallback.", error);
+        allScheduleData = fallbackScheduleData;
+    }
+
+    // プレビュー（トップページ、直近5件）
+    if (previewContainer) {
+        const previewData = allScheduleData.slice(0, 5);
+        previewContainer.innerHTML = previewData.map(item => createScheduleItemHTML(item)).join('');
+    }
+
+    // 全件表示（schedule.html）
+    if (fullContainer) {
+        fullContainer.innerHTML = allScheduleData.map(item => createScheduleItemHTML(item)).join('');
+    }
 }
 
 /* =========================================

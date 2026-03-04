@@ -756,12 +756,11 @@ function renderScheduleCalendar() {
             const colorClass = SCHEDULE_CATEGORY_COLORS[item.category] || SCHEDULE_CATEGORY_COLORS['default'];
             const linkTagStart = item.link ? `<a href="${item.link}" target="_blank" class="block hover:opacity-80 transition-opacity">` : `<div class="block">`;
             const linkTagEnd = item.link ? `</a>` : `</div>`;
-            const timeStr = item.time ? `<span class="mr-1 opacity-80 font-mono shrink-0 whitespace-nowrap">${item.time}</span>` : '';
 
             html += `
                 ${linkTagStart}
-                <div class="${colorClass} text-[9px] md:text-[10px] p-1 md:px-[6px] md:py-1 rounded shadow-sm leading-tight break-all border border-black/5 flex flex-col xl:flex-row xl:items-start gap-0.5">
-                    ${timeStr}<span class="line-clamp-2 md:line-clamp-none">${item.title}</span>
+                <div class="${colorClass} text-[9px] md:text-[10px] p-[3px] md:px-1.5 md:py-1 rounded shadow-sm leading-snug border border-black/5 block w-full">
+                    <span class="truncate block w-full" title="${item.title}">${item.title}</span>
                 </div>
                 ${linkTagEnd}
             `;

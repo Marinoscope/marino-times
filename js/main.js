@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Gallery (Music Videos & Others)
     if (document.getElementById('gallery-preview-list')) renderGalleryPreview();
     if (document.getElementById('gallery-mv-grid')) initGallery();
+
+    // Blog Archive
+    if (document.getElementById('blog-grid')) initBlogArchive();
 });
 
 /* =========================================
@@ -1309,3 +1312,196 @@ window.shareArticle = async function (title, url) {
         }
     }
 };
+
+/* =========================================
+   Blog Archive (Official Blog Index)
+   ========================================= */
+const SHEET_BLOG_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTF_mZSMjo9gB3lHeruGf2jpVfKxMcnVA3TrVNo8Z3RZOJA7cQG9Ilfq5cH8YCSdp31SD5REAM342_d/pub?gid=611733905&single=true&output=csv';
+
+let allBlogData = [];
+let currentBlogCategory = 'all';
+let currentBlogSearch = '';
+
+async function initBlogArchive() {
+    const grid = document.getElementById('blog-grid');
+    if (!grid) return;
+
+    grid.innerHTML = '<p class="col-span-full text-center text-gray-400 text-sm py-16">読み込み中...</p>';
+
+    try {
+        allBlogData = await fetchBlogData();
+    } catch (err) {
+        console.error('[Blog] データ取得に失敗:', err);
+        allBlogData = [];
+    }
+
+    if (allBlogData.length === 0) {
+        grid.innerHTML = '<p class="col-span-full text-center text-gray-400 text-sm py-16">ブログデータの取得に失敗しました。</p>';
+        return;
+    }
+
+    // カテゴリタグを生成
+    buildCategoryTags();
+
+    // 検索イベント
+    const searchInput = document.getElementById('blog-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            currentBlogSearch = e.target.value.trim();
+            renderBlogGrid();
+        });
+    }
+
+    // 初期描画
+    renderBlogGrid();
+}
+
+async function fetchBlogData() {
+    let csvUrl = SHEET_BLOG_CSV_URL;
+    if (window.location.protocol === 'file:') {
+        csvUrl = 'https://corsproxy.io/?' + encodeURIComponent(SHEET_BLOG_CSV_URL);
+    }
+
+    const res = await fetch(csvUrl, { redirect: 'follow' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const csvText = await res.text();
+    return parseBlogCSV(csvText);
+}
+
+function parseBlogCSV(csvText) {
+    const lines = csvText.split('\n').filter(l => l.trim());
+    if (lines.length <= 1) return [];
+
+    const results = [];
+    for (let i = 1; i < lines.length; i++) {
+        // CSV行をパース（ダブルクォート対応）
+        const fields = [];
+        let current = '';
+        let inQuotes = false;
+        for (let c = 0; c < lines[i].length; c++) {
+            const ch = lines[i][c];
+            if (ch === '"') {
+                inQuotes = !inQuotes;
+            } else if (ch === ',' && !inQuotes) {
+                fields.push(current.trim());
+                current = '';
+            } else {
+                current += ch;
+            }
+        }
+        fields.push(current.trim());
+
+        if (fields.length >= 3) {
+            const categories = (fields[4] || '').split(',').map(c => c.trim()).filter(c => c);
+            results.push({
+                date: fields[0] || '',
+                title: fields[1] || '(無題)',
+                url: fields[2] || '#',
+                image: fields[3] || '',
+                categories: categories
+            });
+        }
+    }
+    return results;
+}
+
+function buildCategoryTags() {
+    const container = document.getElementById('blog-category-tags');
+    if (!container) return;
+
+    // 全カテゴリを収集
+    const categorySet = new Set();
+    allBlogData.forEach(item => {
+        item.categories.forEach(cat => categorySet.add(cat));
+    });
+    const categories = Array.from(categorySet).sort();
+
+    const activeClass = 'px-4 py-2 text-xs font-bold rounded-full border-2 border-emerald-500 bg-emerald-500 text-white transition-all hover:shadow-md cursor-pointer';
+    const inactiveClass = 'px-4 py-2 text-xs font-bold rounded-full border-2 border-gray-200 text-gray-500 bg-white transition-all hover:shadow-md hover:border-emerald-500 hover:text-emerald-600 cursor-pointer';
+
+    let html = `<button class="blog-cat-btn ${activeClass}" data-category="all" onclick="filterBlogByCategory('all')">All</button>`;
+    categories.forEach(cat => {
+        html += `<button class="blog-cat-btn ${inactiveClass}" data-category="${cat}" onclick="filterBlogByCategory('${cat}')">${cat}</button>`;
+    });
+    container.innerHTML = html;
+}
+
+window.filterBlogByCategory = function (category) {
+    currentBlogCategory = category;
+    renderBlogGrid();
+
+    // ボタンのアクティブ切り替え
+    const activeClass = 'px-4 py-2 text-xs font-bold rounded-full border-2 border-emerald-500 bg-emerald-500 text-white transition-all hover:shadow-md cursor-pointer';
+    const inactiveClass = 'px-4 py-2 text-xs font-bold rounded-full border-2 border-gray-200 text-gray-500 bg-white transition-all hover:shadow-md hover:border-emerald-500 hover:text-emerald-600 cursor-pointer';
+
+    document.querySelectorAll('.blog-cat-btn').forEach(btn => {
+        btn.className = 'blog-cat-btn ' + (btn.dataset.category === category ? activeClass : inactiveClass);
+    });
+};
+
+function renderBlogGrid() {
+    const grid = document.getElementById('blog-grid');
+    const noResults = document.getElementById('blog-no-results');
+    const countEl = document.getElementById('blog-result-count');
+    if (!grid) return;
+
+    let filtered = allBlogData;
+
+    // カテゴリフィルタ
+    if (currentBlogCategory !== 'all') {
+        filtered = filtered.filter(item => item.categories.includes(currentBlogCategory));
+    }
+
+    // キーワード検索
+    if (currentBlogSearch) {
+        const q = currentBlogSearch.toLowerCase();
+        filtered = filtered.filter(item =>
+            item.title.toLowerCase().includes(q) ||
+            item.date.includes(q) ||
+            item.categories.some(c => c.toLowerCase().includes(q))
+        );
+    }
+
+    if (countEl) {
+        countEl.textContent = `${filtered.length} 件の記事`;
+    }
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '';
+        if (noResults) noResults.classList.remove('hidden');
+        return;
+    }
+
+    if (noResults) noResults.classList.add('hidden');
+    grid.innerHTML = filtered.map(item => createBlogCardHTML(item)).join('');
+}
+
+function createBlogCardHTML(item) {
+    const categoryChips = item.categories.map(cat =>
+        `<span class="inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">${cat}</span>`
+    ).join(' ');
+
+    return `
+        <article class="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
+            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="block h-full">
+                <div class="relative overflow-hidden h-52 bg-gray-100">
+                    ${item.image
+            ? `<img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" referrerpolicy="no-referrer">`
+            : `<div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-sakura-pink to-pearl-green"><span class="text-4xl">📝</span></div>`
+        }
+                </div>
+                <div class="p-5">
+                    <time class="text-[11px] text-gray-400 font-mono block mb-2">${item.date}</time>
+                    <h3 class="text-base font-bold text-soft-black leading-relaxed mb-3 group-hover:text-sakura-dark transition-colors">${item.title}</h3>
+                    <div class="flex flex-wrap gap-1">
+                        ${categoryChips}
+                    </div>
+                    <div class="mt-4 text-xs text-sakura-dark font-bold flex items-center gap-1 group-hover:gap-2 transition-all">
+                        公式ブログで読む
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </div>
+                </div>
+            </a>
+        </article>
+    `;
+}

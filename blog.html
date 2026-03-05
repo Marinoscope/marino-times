@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="images/marino_times_logo_rounded.svg">
     <link rel="apple-touch-icon" type="image/jpeg" href="images/marino_times_logo.jpg">
-    <title>Our Activities - まりのたいむず</title>
-    <meta name="description" content="櫻坂46 幸阪茉里乃ちゃん応援団体「まりのたいむず」の活動実績・企画アーカイブです。">
+    <title>Official Blog Archive - まりのたいむず</title>
+    <meta name="description" content="櫻坂46 幸阪茉里乃ちゃんの公式ブログをカテゴリ・キーワードで検索できるアーカイブです。">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -51,18 +51,16 @@
         <div class="container mx-auto px-4 h-16 flex items-center justify-between">
             <a href="index.html"
                 class="text-xl font-bold text-soft-brown tracking-widest hover:text-sakura-dark transition-colors">まりのたいむず</a>
-
             <nav id="nav-menu"
                 class="hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md shadow-md py-4 flex-col space-y-4 md:static md:flex md:flex-row md:space-y-0 md:space-x-4 lg:space-x-6 md:w-auto md:bg-transparent md:shadow-none text-[10px] lg:text-[11px] font-bold tracking-[0.2em] uppercase items-center">
                 <a href="index.html#schedule" class="hover:text-sakura-dark transition-colors block">Schedule</a>
                 <a href="index.html#about" class="hover:text-sakura-dark transition-colors block">About Us</a>
                 <a href="log.html" class="hover:text-sakura-dark transition-colors block">Marino's Log</a>
-                <a href="blog.html" class="hover:text-sakura-dark transition-colors block">Blog Archive</a>
+                <a href="blog.html"
+                    class="text-sakura-dark transition-colors border-b-2 border-sakura-dark pb-1 block">Blog Archive</a>
                 <a href="gallery.html" class="hover:text-sakura-dark transition-colors block">Gallery</a>
                 <a href="journal.html" class="hover:text-sakura-dark transition-colors block">Our Journal</a>
-                <a href="activities.html"
-                    class="text-sakura-dark transition-colors border-b-2 border-sakura-dark pb-1 block">Our
-                    Activities</a>
+                <a href="activities.html" class="hover:text-sakura-dark transition-colors block">Our Activities</a>
                 <a href="index.html#links" class="hover:text-sakura-dark transition-colors block">Official Links</a>
                 <a href="index.html#contact" class="hover:text-sakura-dark transition-colors block">Contact Us</a>
             </nav>
@@ -78,29 +76,56 @@
 
     <main class="relative z-10 pt-32 pb-24 flex-grow">
         <section class="px-4 max-w-6xl mx-auto fade-up transition-all duration-1000">
-            <div class="text-center mb-16">
+            <!-- ヘッダー -->
+            <div class="text-center mb-12">
                 <a href="index.html"
                     class="inline-flex items-center text-xs font-bold text-gray-400 hover:text-sakura-dark transition-colors mb-8 uppercase tracking-[0.2em]">
                     &larr; Back to Home
                 </a>
                 <h2 class="text-3xl md:text-4xl font-bold text-soft-brown tracking-[0.3em] uppercase">
-                    Our Activities
+                    Blog Archive
                 </h2>
-                <p class="text-sm text-gray-500 mt-4 tracking-widest">まりのたいむずのこれまでの活動の軌跡をまとめています</p>
+                <p class="text-sm text-gray-500 mt-4 tracking-widest">幸阪茉里乃ちゃんの公式ブログアーカイブ</p>
+                <div class="mt-4 space-y-1">
+                    <p class="text-[11px] text-gray-400">※まりのたいむず編集部が手動で随時追加しているため、すべての記事が網羅されているわけではありません。</p>
+                    <p class="text-[11px] text-red-400">※ブログ本文は公式サイトでご覧ください。リンクをクリックすると公式ブログが開きます。</p>
+                </div>
             </div>
 
-            <div
-                class="max-w-4xl mx-auto bg-gradient-to-br from-white to-pearl-green/20 rounded-3xl p-8 md:p-12 border border-white shadow-sm">
-                <h3
-                    class="text-xl font-bold text-center text-soft-brown mb-10 tracking-[0.2em] relative inline-block left-1/2 -translate-x-1/2">
-                    活動の軌跡
-                    <span class="block text-[10px] text-gray-400 font-normal tracking-[0.3em] uppercase mt-1">Our
-                        History</span>
-                </h3>
-                <div id="activities-timeline"
-                    class="relative border-l-2 border-pearl-dark ml-4 md:ml-10 space-y-10 pl-6 md:pl-10">
-                    <!-- Injected by JS -->
+            <!-- 検索 & フィルター -->
+            <div class="mb-10">
+                <!-- 検索ボックス -->
+                <div class="max-w-xl mx-auto mb-6">
+                    <div class="relative">
+                        <input type="text" id="blog-search" placeholder="キーワードで検索..."
+                            class="w-full border border-gray-200 rounded-full px-6 py-3 text-sm focus:outline-none focus:border-sakura-dark focus:ring-2 focus:ring-sakura-pink transition-all shadow-sm">
+                        <svg class="w-5 h-5 text-gray-400 absolute right-5 top-1/2 -translate-y-1/2" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
                 </div>
+
+                <!-- カテゴリタグ -->
+                <div class="flex flex-wrap gap-2 justify-center" id="blog-category-tags">
+                    <!-- JSで動的に生成 -->
+                </div>
+            </div>
+
+            <!-- 記事数 -->
+            <div class="text-center mb-6">
+                <p class="text-xs text-gray-400" id="blog-result-count"></p>
+            </div>
+
+            <!-- ブログカードグリッド -->
+            <div id="blog-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- JSで動的に生成 -->
+            </div>
+
+            <!-- 記事が見つからない場合 -->
+            <div id="blog-no-results" class="hidden text-center py-16">
+                <p class="text-gray-400 text-sm">条件に一致するブログ記事が見つかりませんでした。</p>
             </div>
         </section>
     </main>

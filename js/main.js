@@ -371,16 +371,37 @@ async function initArticle() {
                 ${article.body || '<p class="text-gray-400">本文はありません。</p>'}
             </div>
 
-            <div class="mt-16 pt-8 border-t border-gray-100 flex flex-col items-center gap-4">
-                ${(article.link && article.link !== '#') ? `
-                <a href="${article.link}" target="_blank"
-                    class="inline-block bg-soft-brown text-white px-8 py-3 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-amber-800 transition-all duration-300 transform hover:-translate-y-1 text-sm">
-                    関連ページを開く
-                </a>` : ''}
-                <a href="journal.html"
-                    class="inline-block bg-sakura-dark text-white px-8 py-3 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-pink-400 transition-all duration-300 transform hover:-translate-y-1 text-sm">
-                    記事一覧に戻る
-                </a>
+            <div class="mt-12 pt-8 border-t border-gray-100 flex flex-col items-center">
+                <p class="text-[10px] text-gray-400 font-bold tracking-[0.2em] uppercase mb-4">Share this article</p>
+                <div class="flex gap-4 mb-8">
+                    <!-- X (Twitter) -->
+                    <a href="https://x.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(article.title + ' | まりのたいむず\n')}" target="_blank" rel="noopener noreferrer"
+                        class="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center hover:bg-gray-800 transition-colors shadow-sm hover:shadow-md">
+                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 22.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </a>
+                    <!-- LINE -->
+                    <a href="https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(window.location.href)}" target="_blank" rel="noopener noreferrer"
+                        class="w-12 h-12 rounded-full bg-[#06C755] text-white flex items-center justify-center hover:bg-[#05b34c] transition-colors shadow-sm hover:shadow-md">
+                        <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.282-.54 6.812-4.006 9.44-6.978 1.741-1.9 2.544-4.321 2.544-5.965z"/></svg>
+                    </a>
+                    <!-- SHARE / COPY -->
+                    <button onclick="shareArticle('${article.title.replace(/'/g, "\\'")}', '${window.location.href}')"
+                        class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors shadow-sm hover:shadow-md">
+                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+                    </button>
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-4">
+                    ${(article.link && article.link !== '#') ? `
+                    <a href="${article.link}" target="_blank"
+                        class="inline-block bg-soft-brown text-white px-8 py-3 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-amber-800 transition-all duration-300 transform hover:-translate-y-1 text-sm text-center">
+                        関連ページを開く
+                    </a>` : ''}
+                    <a href="journal.html"
+                        class="inline-block bg-sakura-dark text-white px-8 py-3 rounded-full font-bold shadow-md hover:shadow-lg hover:bg-pink-400 transition-all duration-300 transform hover:-translate-y-1 text-sm text-center">
+                        記事一覧に戻る
+                    </a>
+                </div>
             </div>
         `;
     } catch (error) {
@@ -1263,3 +1284,28 @@ function updateSortButtons(direction) {
     if (btnNew) btnNew.className = direction === 'desc' ? activeClass : inactiveClass;
     if (btnOld) btnOld.className = direction === 'asc' ? activeClass : inactiveClass;
 }
+
+// ==========================================
+// 記事共有機能 (Article Share)
+// ==========================================
+window.shareArticle = async function (title, url) {
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: title,
+                url: url
+            });
+        } catch (error) {
+            console.log('共有がキャンセルされました', error);
+        }
+    } else {
+        // Web Share API非対応ブラウザ（PCなど）の場合はクリップボードにコピー
+        try {
+            await navigator.clipboard.writeText(url);
+            alert('記事のURLをクリップボードにコピーしました！\n' + url);
+        } catch (err) {
+            console.error('URLのコピーに失敗しました', err);
+            alert('URLのコピーに失敗しました。');
+        }
+    }
+};

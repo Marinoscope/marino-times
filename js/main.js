@@ -487,7 +487,7 @@ async function renderHistoryFull() {
 const SHEET_ACTIVITIES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTF_mZSMjo9gB3lHeruGf2jpVfKxMcnVA3TrVNo8Z3RZOJA7cQG9Ilfq5cH8YCSdp31SD5REAM342_d/pub?gid=2139893562&single=true&output=csv';
 
 const fallbackActivitiesData = [
-    { date: "2024.07.07", title: "応援団体「まりのたいむず」結成", description: "幸阪茉里乃さんに関する情報を発信するアカウントとして「まりのたいむず」を発足。<br>X（旧Twitter）を中心に活動を開始。<br>活動コンセプトは「幸阪茉里乃さんを全力応援！」" },
+    { date: "2024.07.07", title: "応援団体「まりのたいむず」結成", description: "幸阪茉里乃ちゃんに関する情報を発信するアカウントとして「まりのたいむず」を発足。<br>X（旧Twitter）を中心に活動を開始。<br>活動コンセプトは「幸阪茉里乃ちゃんを全力応援！」" },
     { date: "2024.08.27", title: "#marinotalk 購読キャンペーン", description: "#marinotalk 購読キャンペーンを実施。" }
 ];
 
